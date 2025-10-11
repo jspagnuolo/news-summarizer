@@ -19,6 +19,6 @@ crons = ["0 9 * * *"]
 # - OPENAI_API_KEY
 # - NEWS_API_KEY
 # - GITHUB_TOKEN
-# - GITHUB_REPO_OWNER
-# - GITHUB_REPO_NAME
-# - GITHUB_BRANCH
+# - GITHUB_BRANCH (optional, defaults to 'main')
+#
+# Note: GITHUB_OWNER and GITHUB_REPO are set above in [vars] section

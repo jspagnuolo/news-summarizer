@@ -39,10 +39,9 @@ wrangler login
 wrangler secret put OPENAI_API_KEY
 wrangler secret put NEWS_API_KEY
 wrangler secret put GITHUB_TOKEN
-wrangler secret put GITHUB_REPO_OWNER
-wrangler secret put GITHUB_REPO_NAME
 wrangler secret put GITHUB_BRANCH
 wrangler deploy
+# Note: GITHUB_OWNER and GITHUB_REPO are set in wrangler.toml [vars] section
 cd ..
 ```
 
@@ -121,9 +120,9 @@ Required secrets for Cloudflare Worker:
 - `OPENAI_API_KEY` - OpenAI API key
 - `NEWS_API_KEY` - NewsAPI key
 - `GITHUB_TOKEN` - GitHub personal access token
-- `GITHUB_REPO_OWNER` - Your GitHub username
-- `GITHUB_REPO_NAME` - Repository name (e.g., "news-summarizer")
 - `GITHUB_BRANCH` - Target branch (usually "main")
+
+Note: `GITHUB_OWNER` and `GITHUB_REPO` are configured in `wrangler.toml` under the `[vars]` section, not as secrets.
 
 ## Cost Estimates (Free Tiers)
 

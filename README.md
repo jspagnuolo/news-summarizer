@@ -87,10 +87,10 @@ cd ..
    OPENAI_API_KEY=sk-proj-your-actual-key-here
    NEWS_API_KEY=your-newsapi-key-here
    GITHUB_TOKEN=ghp_your-github-token-here
-   GITHUB_REPO_OWNER=your-github-username
-   GITHUB_REPO_NAME=news-summarizer
    GITHUB_BRANCH=main
    ```
+
+   **Note:** `GITHUB_OWNER` and `GITHUB_REPO` are configured in `wrangler.toml` under the `[vars]` section.
 
    **⚠️ IMPORTANT:** Never commit the `.env` file! It's in `.gitignore` for safety.
 
@@ -114,10 +114,10 @@ cd ..
    wrangler secret put OPENAI_API_KEY
    wrangler secret put NEWS_API_KEY
    wrangler secret put GITHUB_TOKEN
-   wrangler secret put GITHUB_REPO_OWNER
-   wrangler secret put GITHUB_REPO_NAME
    wrangler secret put GITHUB_BRANCH
    ```
+
+   **Note:** You don't need to set `GITHUB_OWNER` and `GITHUB_REPO` as secrets - they're already configured in `wrangler.toml`.
 
 4. **Deploy the worker:**
    ```bash

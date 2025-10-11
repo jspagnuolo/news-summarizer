@@ -19,7 +19,7 @@ import NewsAPI from 'newsapi';
  * Fetches the topics configuration from GitHub
  */
 async function fetchTopicsConfig(env) {
-  const url = `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/contents/config/topics.json`;
+  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/config/topics.json`;
 
   const response = await fetch(url, {
     headers: {
@@ -229,7 +229,7 @@ ${articles.map((article, idx) => {
  * Gets the SHA of a file if it exists in the repository
  */
 async function getFileSHA(path, env) {
-  const url = `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/contents/${path}`;
+  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
 
   try {
     const response = await fetch(url, {
@@ -256,7 +256,7 @@ async function getFileSHA(path, env) {
 async function commitToGitHub(path, content, message, env) {
   console.log(`Committing file: ${path}`);
 
-  const url = `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/contents/${path}`;
+  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
 
   // Check if file exists and get its SHA
   const existingSha = await getFileSHA(path, env);
