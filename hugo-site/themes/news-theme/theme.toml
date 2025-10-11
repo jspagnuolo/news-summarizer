@@ -1,7 +1,7 @@
 name = "News Theme"
 license = "MIT"
 description = "A clean, responsive theme for news summaries"
-homepage = "https://github.com/yourusername/news-summarizer"
+homepage = "https://github.com/jspagnuolo/news-summarizer"
 min_version = "0.112.0"
 
 [author]

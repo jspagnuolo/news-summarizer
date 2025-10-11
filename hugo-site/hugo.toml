@@ -1,4 +1,4 @@
-baseURL = "https://your-site.pages.dev/"
+baseURL = "https://news-summarizer-ece.pages.dev/"
 languageCode = "en-us"
 title = "News Summarizer"
 theme = "news-theme"
