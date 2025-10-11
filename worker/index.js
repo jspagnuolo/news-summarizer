@@ -361,7 +361,7 @@ async function handleScheduled(event, env) {
       apiKey: env.OPENAI_API_KEY
     });
 
-    const newsapi = new NewsAPI(env.NEWS_API_KEY);
+    const newsapi = new NewsAPI(env.NEWSAPI_KEY);
 
     // Fetch topics configuration
     console.log('Fetching topics configuration...');

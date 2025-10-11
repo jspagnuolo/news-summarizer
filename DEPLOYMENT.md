@@ -37,7 +37,7 @@ cd worker
 npm install -g wrangler
 wrangler login
 wrangler secret put OPENAI_API_KEY
-wrangler secret put NEWS_API_KEY
+wrangler secret put NEWSAPI_KEY
 wrangler secret put GITHUB_TOKEN
 wrangler secret put GITHUB_BRANCH
 wrangler deploy
@@ -118,7 +118,7 @@ wrangler secret list  # Verify secrets are set
 
 Required secrets for Cloudflare Worker:
 - `OPENAI_API_KEY` - OpenAI API key
-- `NEWS_API_KEY` - NewsAPI key
+- `NEWSAPI_KEY` - NewsAPI key
 - `GITHUB_TOKEN` - GitHub personal access token
 - `GITHUB_BRANCH` - Target branch (usually "main")
 

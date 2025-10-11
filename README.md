@@ -85,7 +85,7 @@ cd ..
 3. **Edit `.env` file with your actual keys:**
    ```
    OPENAI_API_KEY=sk-proj-your-actual-key-here
-   NEWS_API_KEY=your-newsapi-key-here
+   NEWSAPI_KEY=your-newsapi-key-here
    GITHUB_TOKEN=ghp_your-github-token-here
    GITHUB_BRANCH=main
    ```
@@ -112,7 +112,7 @@ cd ..
 
    # Set each secret (you'll be prompted to enter the value)
    wrangler secret put OPENAI_API_KEY
-   wrangler secret put NEWS_API_KEY
+   wrangler secret put NEWSAPI_KEY
    wrangler secret put GITHUB_TOKEN
    wrangler secret put GITHUB_BRANCH
    ```
