@@ -9,7 +9,6 @@
  */
 
 import OpenAI from 'openai';
-import NewsAPI from 'newsapi';
 
 // ============================================================================
 // CONFIGURATION & UTILITIES
@@ -67,9 +66,9 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
 // ============================================================================
 
 /**
- * Fetches news articles for a specific topic
+ * Fetches news articles for a specific topic using NewsAPI REST API
  */
-async function fetchNewsForTopic(topic, newsapi, settings) {
+async function fetchNewsForTopic(topic, apiKey, settings) {
   console.log(`Fetching news for topic: ${topic.name}`);
 
   const today = new Date();
@@ -81,17 +80,38 @@ async function fetchNewsForTopic(topic, newsapi, settings) {
 
   try {
     const response = await retryWithBackoff(async () => {
-      return await newsapi.v2.everything({
+      // Build query parameters
+      const params = new URLSearchParams({
         q: topic.query,
         language: topic.language || 'en',
         sortBy: topic.sortBy || 'publishedAt',
         from: formatDate(fromDate),
         to: formatDate(today),
-        pageSize: settings.maxArticlesPerTopic || 10,
-        sources: topic.sources?.length > 0 ? topic.sources.join(',') : undefined,
-        domains: topic.excludeDomains?.length > 0 ? undefined : undefined,
-        excludeDomains: topic.excludeDomains?.length > 0 ? topic.excludeDomains.join(',') : undefined
+        pageSize: String(settings.maxArticlesPerTopic || 10),
+        apiKey: apiKey
       });
+
+      if (topic.sources?.length > 0) {
+        params.append('sources', topic.sources.join(','));
+      }
+      if (topic.excludeDomains?.length > 0) {
+        params.append('excludeDomains', topic.excludeDomains.join(','));
+      }
+
+      const url = `https://newsapi.org/v2/everything?${params.toString()}`;
+
+      const fetchResponse = await fetch(url, {
+        headers: {
+          'User-Agent': 'News-Summarizer-Worker/1.0'
+        }
+      });
+
+      if (!fetchResponse.ok) {
+        const errorData = await fetchResponse.json();
+        throw new Error(errorData.message || `NewsAPI error: ${fetchResponse.statusText}`);
+      }
+
+      return await fetchResponse.json();
     });
 
     if (response.status === 'ok' && response.articles?.length > 0) {
@@ -298,7 +318,7 @@ async function commitToGitHub(path, content, message, env) {
 /**
  * Processes a single topic: fetch news, summarize, generate markdown, commit
  */
-async function processTopic(topic, newsapi, openai, env, date) {
+async function processTopic(topic, openai, env, date) {
   console.log(`\n========================================`);
   console.log(`Processing topic: ${topic.name}`);
   console.log(`========================================`);
@@ -307,7 +327,7 @@ async function processTopic(topic, newsapi, openai, env, date) {
     // Step 1: Fetch news articles
     const articles = await fetchNewsForTopic(
       topic,
-      newsapi,
+      env.NEWSAPI_KEY,
       env.topicsConfig.settings
     );
 
@@ -361,8 +381,6 @@ async function handleScheduled(event, env) {
       apiKey: env.OPENAI_API_KEY
     });
 
-    const newsapi = new NewsAPI(env.NEWSAPI_KEY);
-
     // Fetch topics configuration
     console.log('Fetching topics configuration...');
     const topicsConfig = await fetchTopicsConfig(env);
@@ -374,7 +392,7 @@ async function handleScheduled(event, env) {
     // Process each topic
     const date = new Date();
     for (const topic of activeTopics) {
-      const result = await processTopic(topic, newsapi, openai, env, date);
+      const result = await processTopic(topic, openai, env, date);
       results.topics.push(result);
 
       if (result.success) {
