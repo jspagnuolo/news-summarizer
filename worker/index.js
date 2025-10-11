@@ -312,6 +312,51 @@ async function commitToGitHub(path, content, message, env) {
 }
 
 // ============================================================================
+// CLOUDFLARE CACHE PURGING
+// ============================================================================
+
+/**
+ * Purges Cloudflare cache for the entire site
+ */
+async function purgeCloudflareCache(env) {
+  console.log('Purging Cloudflare cache...');
+
+  // If CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN are not set, skip cache purge
+  if (!env.CLOUDFLARE_ZONE_ID || !env.CLOUDFLARE_API_TOKEN) {
+    console.log('⚠️  Cache purge skipped - CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not configured');
+    return { success: false, skipped: true };
+  }
+
+  try {
+    const url = `https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE_ID}/purge_cache`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        purge_everything: true
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Failed to purge cache: ${JSON.stringify(errorData)}`);
+    }
+
+    const result = await response.json();
+    console.log('✓ Successfully purged Cloudflare cache');
+    return { success: true, result };
+
+  } catch (error) {
+    console.error(`✗ Failed to purge cache: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================================================
 // MAIN WORKFLOW
 // ============================================================================
 
@@ -415,6 +460,13 @@ async function handleScheduled(event, env) {
     console.log(`Skipped: ${results.skipped}`);
     console.log(`Failed: ${results.failed}`);
     console.log('========================================');
+
+    // Purge Cloudflare cache if any summaries were successfully created
+    if (results.success > 0) {
+      console.log('\n');
+      const cacheResult = await purgeCloudflareCache(env);
+      results.cachePurge = cacheResult;
+    }
 
     return results;
 

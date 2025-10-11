@@ -115,9 +115,17 @@ cd ..
    wrangler secret put NEWSAPI_KEY
    wrangler secret put GITHUB_TOKEN
    wrangler secret put GITHUB_BRANCH
+
+   # Optional: Set cache purging credentials for immediate content updates
+   wrangler secret put CLOUDFLARE_ZONE_ID
+   wrangler secret put CLOUDFLARE_API_TOKEN
    ```
 
    **Note:** You don't need to set `GITHUB_OWNER` and `GITHUB_REPO` as secrets - they're already configured in `wrangler.toml`.
+
+   **Cache Purging (Optional):** If you set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`, the worker will automatically purge Cloudflare's cache after publishing new summaries, ensuring users see updates immediately without hard refresh. Find these values in your Cloudflare dashboard:
+   - Zone ID: Go to your Pages site > Overview (right sidebar)
+   - API Token: Go to My Profile > API Tokens > Create Token > Use "Edit Cloudflare Workers" template
 
 4. **Deploy the worker:**
    ```bash

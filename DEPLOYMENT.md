@@ -40,10 +40,17 @@ wrangler secret put OPENAI_API_KEY
 wrangler secret put NEWSAPI_KEY
 wrangler secret put GITHUB_TOKEN
 wrangler secret put GITHUB_BRANCH
+
+# Optional: Set cache purging credentials for immediate content updates
+wrangler secret put CLOUDFLARE_ZONE_ID
+wrangler secret put CLOUDFLARE_API_TOKEN
+
 wrangler deploy
 # Note: GITHUB_OWNER and GITHUB_REPO are set in wrangler.toml [vars] section
 cd ..
 ```
+
+**Optional Cache Purging:** The `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` enable automatic cache purging after publishing summaries, ensuring immediate content updates. Find these in your Cloudflare dashboard (Pages site Overview for Zone ID, API Tokens for the token).
 
 ### 4. Push to GitHub
 
@@ -121,6 +128,10 @@ Required secrets for Cloudflare Worker:
 - `NEWSAPI_KEY` - NewsAPI key
 - `GITHUB_TOKEN` - GitHub personal access token
 - `GITHUB_BRANCH` - Target branch (usually "main")
+
+Optional secrets for automatic cache purging:
+- `CLOUDFLARE_ZONE_ID` - Your Cloudflare Zone ID (enables automatic cache purging)
+- `CLOUDFLARE_API_TOKEN` - Cloudflare API token with cache purge permissions
 
 Note: `GITHUB_OWNER` and `GITHUB_REPO` are configured in `wrangler.toml` under the `[vars]` section, not as secrets.
 
