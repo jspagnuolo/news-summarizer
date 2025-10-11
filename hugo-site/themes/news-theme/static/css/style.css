@@ -181,6 +181,38 @@ main {
   text-decoration: underline;
 }
 
+/* Sources Section Styling */
+.summary-content h2:last-of-type {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.summary-content ol li {
+  background-color: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+  line-height: 1.6;
+  transition: background-color 0.2s;
+}
+
+.summary-content ol li:hover {
+  background-color: #f3f4f6;
+}
+
+.summary-content ol li a {
+  font-weight: 500;
+  color: var(--text-color);
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+
+.summary-content ol li a:hover {
+  color: var(--primary-color);
+}
+
 /* Topics List */
 .topics-grid {
   display: grid;
