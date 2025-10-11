@@ -1,0 +1,2 @@
+# This file ensures the summaries directory is tracked by git
+# Topic-specific subdirectories will be created automatically by the worker

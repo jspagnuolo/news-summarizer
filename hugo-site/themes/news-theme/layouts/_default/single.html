@@ -1,0 +1,31 @@
+{{ define "title" }}{{ .Title }} | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+<article class="summary-card">
+    <h1 style="color: #2563eb; margin-bottom: 1rem;">{{ .Title }}</h1>
+
+    <div class="summary-meta" style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
+        <span>📅 {{ .Date.Format "Monday, January 2, 2006" }}</span>
+        <span>🏷️ {{ .Params.topicName }}</span>
+        <span>📰 {{ .Params.articleCount }} articles</span>
+        {{ if .Params.sources }}
+        <span>🔖 Sources: {{ delimit .Params.sources ", " }}</span>
+        {{ end }}
+    </div>
+
+    <div class="summary-content">
+        {{ .Content }}
+    </div>
+</article>
+
+<div style="margin-top: 2rem; text-align: center;">
+    <a href="{{ "/" | absURL }}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #e5e7eb; color: #1f2937; text-decoration: none; border-radius: 4px; margin-right: 1rem;">
+        ← Back to Home
+    </a>
+    {{ if .Params.topic }}
+    <a href="{{ printf "/topics/%s/" .Params.topic | absURL }}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #2563eb; color: white; text-decoration: none; border-radius: 4px;">
+        View All {{ .Params.topicName }} Summaries
+    </a>
+    {{ end }}
+</div>
+{{ end }}

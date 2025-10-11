@@ -1,0 +1,31 @@
+{{ define "title" }}{{ .Title }} | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+<div class="list-page">
+    <h1 style="text-align: center; margin-bottom: 2rem; color: #1f2937;">{{ .Title }}</h1>
+
+    {{ if .Content }}
+    <div style="margin-bottom: 2rem;">
+        {{ .Content }}
+    </div>
+    {{ end }}
+
+    {{ range .Pages }}
+    <article class="summary-card">
+        <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
+        <div class="summary-meta">
+            <span>📅 {{ .Date.Format "January 2, 2006" }}</span>
+            <span>🏷️ {{ .Params.topicName }}</span>
+            <span>📰 {{ .Params.articleCount }} articles</span>
+        </div>
+        <div class="summary-excerpt">
+            {{ .Summary }}
+        </div>
+    </article>
+    {{ else }}
+    <p style="text-align: center; color: #6b7280; padding: 3rem;">
+        No summaries available yet.
+    </p>
+    {{ end }}
+</div>
+{{ end }}

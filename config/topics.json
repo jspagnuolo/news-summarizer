@@ -1,0 +1,19 @@
+{
+  "topics": [
+    {
+      "id": "venezuela",
+      "name": "Venezuela",
+      "query": "Venezuela OR Maduro OR \"Venezuelan government\" OR \"Venezuelan opposition\"",
+      "active": true,
+      "sources": [],
+      "excludeDomains": [],
+      "language": "en",
+      "sortBy": "publishedAt"
+    }
+  ],
+  "settings": {
+    "maxArticlesPerTopic": 10,
+    "maxRequestsPerDay": 100,
+    "articleMaxAge": "7d"
+  }
+}

@@ -1,0 +1,24 @@
+name = "news-summarizer-worker"
+main = "index.js"
+compatibility_date = "2024-10-11"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+GITHUB_REPO = "news-summarizer"
+GITHUB_OWNER = "jspagnuolo"
+
+# Cron trigger - runs daily at 9 AM UTC
+[triggers]
+crons = ["0 9 * * *"]
+
+# Environment variables (set these in Cloudflare dashboard)
+# These are just placeholders - actual secrets must be configured in Cloudflare Workers dashboard
+# under Settings > Variables and Secrets
+#
+# Required secrets:
+# - OPENAI_API_KEY
+# - NEWS_API_KEY
+# - GITHUB_TOKEN
+# - GITHUB_REPO_OWNER
+# - GITHUB_REPO_NAME
+# - GITHUB_BRANCH

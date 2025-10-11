@@ -1,0 +1,37 @@
+{{ define "title" }}Topics | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+<div class="topics-page">
+    <h1 style="text-align: center; margin-bottom: 1rem; color: #1f2937;">Topics</h1>
+    <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
+        Select a topic below to view all news summaries for that specific area of coverage.
+    </p>
+
+    <div class="topics-grid">
+        {{ $allPages := where .Site.RegularPages "Section" "summaries" }}
+        {{ $topics := slice }}
+        {{ range $allPages }}
+            {{ $topics = $topics | append .Params.topic }}
+        {{ end }}
+        {{ $uniqueTopics := uniq $topics }}
+
+        {{ range $uniqueTopics }}
+            {{ $topicId := . }}
+            {{ $topicPages := where $allPages "Params.topic" $topicId }}
+            {{ $firstPage := index $topicPages 0 }}
+            <div class="topic-card">
+                <a href="{{ printf "/summaries/%s/" $topicId | absURL }}">
+                    <h3>{{ $firstPage.Params.topicName }}</h3>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">
+                        {{ len $topicPages }} summaries
+                    </p>
+                </a>
+            </div>
+        {{ else }}
+        <p style="text-align: center; color: #6b7280; padding: 3rem; grid-column: 1 / -1;">
+            No topics available yet. Topics will appear after the first summaries are generated.
+        </p>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

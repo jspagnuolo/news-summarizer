@@ -1,0 +1,31 @@
+baseURL = "https://your-site.pages.dev/"
+languageCode = "en-us"
+title = "News Summarizer"
+theme = "news-theme"
+
+[params]
+  description = "AI-powered daily news summaries"
+  author = "News Summarizer Bot"
+
+[menu]
+  [[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    name = "Topics"
+    url = "/topics/"
+    weight = 2
+  [[menu.main]]
+    name = "Archive"
+    url = "/archive/"
+    weight = 3
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[outputs]
+  home = ["HTML", "RSS"]
+  section = ["HTML", "RSS"]
