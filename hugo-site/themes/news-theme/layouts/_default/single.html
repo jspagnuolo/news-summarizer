@@ -8,6 +8,12 @@
         <span>📅 {{ .Date.Format "Monday, January 2, 2006" }}</span>
         <span>🏷️ {{ .Params.topicName }}</span>
         <span>📰 {{ .Params.articleCount }} articles</span>
+        {{ if .Params.venezuelanSources }}
+        <span class="perspective-badge venezuelan">🇻🇪 {{ .Params.venezuelanSources }} Venezuelan</span>
+        {{ end }}
+        {{ if .Params.internationalSources }}
+        <span class="perspective-badge international">🌍 {{ .Params.internationalSources }} International</span>
+        {{ end }}
         {{ if .Params.sources }}
         <span>🔖 Sources: {{ delimit .Params.sources ", " }}</span>
         {{ end }}

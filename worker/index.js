@@ -81,9 +81,9 @@ function buildGoogleNewsUrl(query, language, region) {
 }
 
 /**
- * Parses Google News RSS feed and returns articles
+ * Parses Google News RSS feed and returns articles with metadata
  */
-async function parseRSSFeed(url) {
+async function parseRSSFeed(url, language, region) {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_'
@@ -110,6 +110,9 @@ async function parseRSSFeed(url) {
     ? parsed.rss.channel.item
     : [parsed.rss.channel.item];
 
+  // Determine feed type based on language and region
+  const feedType = (language === 'es' && region === 'VE') ? 'venezuelan' : 'international';
+
   return items.map(item => {
     // Extract source from title (Google News format: "Article Title - Source Name")
     const titleParts = item.title?.split(' - ') || [];
@@ -123,6 +126,11 @@ async function parseRSSFeed(url) {
       description: item.description || '',
       source: {
         name: source
+      },
+      metadata: {
+        language: language,
+        region: region,
+        feedType: feedType
       }
     };
   });
@@ -150,7 +158,7 @@ async function fetchNewsForTopic(topic, settings) {
         console.log(`Fetching feed: ${url}`);
 
         const articles = await retryWithBackoff(async () => {
-          return await parseRSSFeed(url);
+          return await parseRSSFeed(url, feed.language, feed.region);
         });
 
         // Filter by date and add to collection
@@ -192,38 +200,72 @@ async function fetchNewsForTopic(topic, settings) {
 // ============================================================================
 
 /**
- * Summarizes news articles using OpenAI with structured outputs
+ * Summarizes news articles using OpenAI with perspective-based structure
  */
 async function summarizeArticles(articles, topic, openai) {
   console.log(`Summarizing ${articles.length} articles for ${topic.name}`);
 
-  // Prepare article data for the AI
-  const articlesText = articles.map((article, idx) => {
-    return `Article ${idx + 1}:
+  // Separate articles by perspective
+  const venezuelanArticles = articles.filter(a => a.metadata?.feedType === 'venezuelan');
+  const internationalArticles = articles.filter(a => a.metadata?.feedType === 'international');
+
+  console.log(`Venezuelan sources: ${venezuelanArticles.length}, International sources: ${internationalArticles.length}`);
+
+  // Format Venezuelan articles
+  const venezuelanText = venezuelanArticles.length > 0
+    ? venezuelanArticles.map((article, idx) => {
+        return `Article ${idx + 1}:
 Title: ${article.title}
 Source: ${article.source.name}
 Published: ${article.publishedAt}
 Description: ${article.description || 'N/A'}
-URL: ${article.url}
 ---`;
-  }).join('\n\n');
+      }).join('\n\n')
+    : 'No Venezuelan sources available';
 
-  const prompt = `You are a professional news analyst. Analyze and summarize the following news articles about ${topic.name}.
+  // Format international articles
+  const internationalText = internationalArticles.length > 0
+    ? internationalArticles.map((article, idx) => {
+        return `Article ${idx + 1}:
+Title: ${article.title}
+Source: ${article.source.name}
+Published: ${article.publishedAt}
+Description: ${article.description || 'N/A'}
+---`;
+      }).join('\n\n')
+    : 'No international sources available';
 
-${articlesText}
+  const prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from two different regional perspectives.
+
+VENEZUELAN SOURCES (Spanish-language, from inside Venezuela):
+${venezuelanText}
+
+INTERNATIONAL SOURCES (English-language, international media):
+${internationalText}
 
 Provide your response in the following JSON format:
 {
-  "bulletPoints": ["point 1", "point 2", "point 3", ...],
-  "narrativeSummary": "2-3 paragraph narrative summary"
+  "venezuelanPerspective": {
+    "bulletPoints": ["point 1", "point 2", ...],
+    "summary": "2-3 sentence summary of Venezuelan sources"
+  },
+  "internationalPerspective": {
+    "bulletPoints": ["point 1", "point 2", ...],
+    "summary": "2-3 sentence summary of international sources"
+  },
+  "keyDifferences": ["difference 1", "difference 2", ...],
+  "overallSummary": "2-3 paragraph synthesis of both perspectives"
 }
 
 Requirements:
-- Bullet points: Extract 5-8 key highlights from the articles
-- Narrative summary: Write a cohesive 2-3 paragraph summary that synthesizes the main themes and developments
-- Focus on facts and important developments
-- Maintain a neutral, journalistic tone
-- If articles present conflicting information, acknowledge this`;
+- Venezuelan perspective: Summarize what Spanish-language Venezuelan sources are reporting. Note: Some articles may be in Spanish - extract the key information.
+- International perspective: Summarize what international/English sources are reporting
+- Key differences: Identify 2-4 notable differences in coverage, emphasis, or framing between the two perspectives
+- Overall summary: Synthesize both perspectives into a coherent narrative
+- Maintain neutrality - present both perspectives fairly
+- If perspectives conflict, acknowledge this explicitly
+- If one perspective has no sources, note this and focus on available sources
+- All output must be in English (translate Spanish content as needed)`;
 
   try {
     const response = await retryWithBackoff(async () => {
@@ -232,7 +274,7 @@ Requirements:
         messages: [
           {
             role: 'system',
-            content: 'You are a professional news analyst who creates concise, accurate summaries of current events.'
+            content: 'You are a professional news analyst who creates concise, accurate summaries comparing different regional perspectives on current events.'
           },
           {
             role: 'user',
@@ -241,7 +283,7 @@ Requirements:
         ],
         response_format: { type: 'json_object' },
         temperature: 0.3,
-        max_tokens: 2000
+        max_tokens: 3000
       });
     });
 
@@ -259,11 +301,15 @@ Requirements:
 // ============================================================================
 
 /**
- * Generates a Hugo markdown file from the summary
+ * Generates a Hugo markdown file from the perspective-based summary
  */
 function generateHugoMarkdown(topic, articles, summary, date) {
   const sources = [...new Set(articles.map(a => a.source.name))];
   const dateStr = formatDate(date);
+
+  // Count articles by perspective
+  const venezuelanArticles = articles.filter(a => a.metadata?.feedType === 'venezuelan');
+  const internationalArticles = articles.filter(a => a.metadata?.feedType === 'international');
 
   const frontMatter = `---
 title: "${topic.name} News - ${dateStr}"
@@ -272,33 +318,77 @@ topic: ${topic.id}
 topicName: "${topic.name}"
 sources: [${sources.map(s => `"${s}"`).join(', ')}]
 articleCount: ${articles.length}
+venezuelanSources: ${venezuelanArticles.length}
+internationalSources: ${internationalArticles.length}
 draft: false
 ---
 
 `;
 
-  const bulletPointsSection = `## Key Highlights
+  // Venezuelan Perspective Section
+  const venezuelanSection = venezuelanArticles.length > 0
+    ? `## Inside Venezuela (Venezuelan Sources)
 
-${summary.bulletPoints.map(point => `- ${point}`).join('\n')}
+### Key Points
+
+${summary.venezuelanPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
+
+${summary.venezuelanPerspective?.summary || 'No Venezuelan sources available for this summary.'}
+
+`
+    : `## Inside Venezuela (Venezuelan Sources)
+
+No Venezuelan sources available for this time period.
 
 `;
 
-  const narrativeSection = `## Summary
+  // International Perspective Section
+  const internationalSection = internationalArticles.length > 0
+    ? `## International Perspective
 
-${summary.narrativeSummary}
+### Key Points
+
+${summary.internationalPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
+
+${summary.internationalPerspective?.summary || 'No international sources available for this summary.'}
+
+`
+    : `## International Perspective
+
+No international sources available for this time period.
 
 `;
 
+  // Key Differences Section
+  const differencesSection = summary.keyDifferences && summary.keyDifferences.length > 0
+    ? `## Key Differences in Coverage
+
+${summary.keyDifferences.map(diff => `- ${diff}`).join('\n')}
+
+`
+    : '';
+
+  // Overall Summary Section
+  const overallSection = `## Overall Summary
+
+${summary.overallSummary || 'Unable to generate overall summary.'}
+
+`;
+
+  // Sources Section with language/region tags
   const sourcesSection = `## Sources
 
 This summary is based on ${articles.length} article${articles.length !== 1 ? 's' : ''} from the following sources:
 
 ${articles.map((article, idx) => {
-    return `${idx + 1}. [${article.title}](${article.url}) - ${article.source.name} (${new Date(article.publishedAt).toLocaleDateString()})`;
+    const lang = article.metadata?.language || 'unknown';
+    const region = article.metadata?.region || 'unknown';
+    const tag = `[${lang}-${region}]`;
+    return `${idx + 1}. ${tag} [${article.title}](${article.url}) - ${article.source.name} (${new Date(article.publishedAt).toLocaleDateString()})`;
   }).join('\n')}
 `;
 
-  return frontMatter + bulletPointsSection + narrativeSection + sourcesSection;
+  return frontMatter + venezuelanSection + internationalSection + differencesSection + overallSection + sourcesSection;
 }
 
 // ============================================================================
