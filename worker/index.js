@@ -337,7 +337,7 @@ async function purgeCloudflareCache(env) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        prefixes: ['https://news.spagnuolo.biz/']
+        prefixes: ['news.spagnuolo.biz/']
       })
     });
 
