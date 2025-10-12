@@ -9,6 +9,7 @@
  */
 
 import OpenAI from 'openai';
+import { XMLParser } from 'fast-xml-parser';
 
 // ============================================================================
 // CONFIGURATION & UTILITIES
@@ -62,65 +63,124 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
 }
 
 // ============================================================================
-// NEWS FETCHING
+// NEWS FETCHING (Google News RSS)
 // ============================================================================
 
 /**
- * Fetches news articles for a specific topic using NewsAPI REST API
+ * Builds Google News RSS feed URL
  */
-async function fetchNewsForTopic(topic, apiKey, settings) {
+function buildGoogleNewsUrl(query, language, region) {
+  const params = new URLSearchParams({
+    q: query,
+    hl: `${language}-${region}`,
+    gl: region,
+    ceid: `${region}:${language}`
+  });
+
+  return `https://news.google.com/rss/search?${params.toString()}`;
+}
+
+/**
+ * Parses Google News RSS feed and returns articles
+ */
+async function parseRSSFeed(url) {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '@_'
+  });
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'News-Summarizer-Worker/1.0'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`RSS fetch failed: ${response.statusText}`);
+  }
+
+  const xmlText = await response.text();
+  const parsed = parser.parse(xmlText);
+
+  if (!parsed.rss || !parsed.rss.channel || !parsed.rss.channel.item) {
+    return [];
+  }
+
+  const items = Array.isArray(parsed.rss.channel.item)
+    ? parsed.rss.channel.item
+    : [parsed.rss.channel.item];
+
+  return items.map(item => {
+    // Extract source from title (Google News format: "Article Title - Source Name")
+    const titleParts = item.title?.split(' - ') || [];
+    const source = titleParts.length > 1 ? titleParts[titleParts.length - 1] : 'Google News';
+    const title = titleParts.length > 1 ? titleParts.slice(0, -1).join(' - ') : item.title;
+
+    return {
+      title: title || 'Untitled',
+      url: item.link || '',
+      publishedAt: item.pubDate || new Date().toISOString(),
+      description: item.description || '',
+      source: {
+        name: source
+      }
+    };
+  });
+}
+
+/**
+ * Fetches news articles for a specific topic using Google News RSS feeds
+ */
+async function fetchNewsForTopic(topic, settings) {
   console.log(`Fetching news for topic: ${topic.name}`);
 
-  const today = new Date();
-  const fromDate = new Date(today);
-
-  // Parse articleMaxAge (e.g., "7d" = 7 days)
+  const allArticles = [];
+  const maxArticles = settings.maxArticlesPerTopic || 10;
   const maxAgeDays = parseInt(settings.articleMaxAge || '7d');
-  fromDate.setDate(fromDate.getDate() - maxAgeDays);
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
 
   try {
-    const response = await retryWithBackoff(async () => {
-      // Build query parameters
-      const params = new URLSearchParams({
-        q: topic.query,
-        language: topic.language || 'en',
-        sortBy: topic.sortBy || 'publishedAt',
-        from: formatDate(fromDate),
-        to: formatDate(today),
-        pageSize: String(settings.maxArticlesPerTopic || 10),
-        apiKey: apiKey
-      });
+    // Fetch from each RSS feed configured for the topic
+    for (const feed of topic.rssFeeds || []) {
+      if (feed.type !== 'google_news') continue;
 
-      if (topic.sources?.length > 0) {
-        params.append('sources', topic.sources.join(','));
+      try {
+        const url = buildGoogleNewsUrl(topic.query, feed.language, feed.region);
+        console.log(`Fetching feed: ${url}`);
+
+        const articles = await retryWithBackoff(async () => {
+          return await parseRSSFeed(url);
+        });
+
+        // Filter by date and add to collection
+        const recentArticles = articles.filter(article => {
+          const pubDate = new Date(article.publishedAt);
+          return pubDate >= cutoffDate;
+        });
+
+        console.log(`Found ${recentArticles.length} recent articles from ${feed.language}-${feed.region} feed`);
+        allArticles.push(...recentArticles);
+
+      } catch (error) {
+        console.error(`Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`);
+        // Continue with other feeds
       }
-      if (topic.excludeDomains?.length > 0) {
-        params.append('excludeDomains', topic.excludeDomains.join(','));
-      }
-
-      const url = `https://newsapi.org/v2/everything?${params.toString()}`;
-
-      const fetchResponse = await fetch(url, {
-        headers: {
-          'User-Agent': 'News-Summarizer-Worker/1.0'
-        }
-      });
-
-      if (!fetchResponse.ok) {
-        const errorData = await fetchResponse.json();
-        throw new Error(errorData.message || `NewsAPI error: ${fetchResponse.statusText}`);
-      }
-
-      return await fetchResponse.json();
-    });
-
-    if (response.status === 'ok' && response.articles?.length > 0) {
-      console.log(`Found ${response.articles.length} articles for ${topic.name}`);
-      return response.articles;
-    } else {
-      console.log(`No articles found for ${topic.name}`);
-      return [];
     }
+
+    // Remove duplicates by URL
+    const uniqueArticles = Array.from(
+      new Map(allArticles.map(a => [a.url, a])).values()
+    );
+
+    // Sort by date (newest first) and limit
+    const sortedArticles = uniqueArticles
+      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+      .slice(0, maxArticles);
+
+    console.log(`Total unique articles after filtering: ${sortedArticles.length}`);
+    return sortedArticles;
+
   } catch (error) {
     console.error(`Error fetching news for ${topic.name}:`, error.message);
     throw error;
@@ -372,7 +432,6 @@ async function processTopic(topic, openai, env, date) {
     // Step 1: Fetch news articles
     const articles = await fetchNewsForTopic(
       topic,
-      env.NEWSAPI_KEY,
       env.topicsConfig.settings
     );
 

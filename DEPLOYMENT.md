@@ -8,8 +8,8 @@ This is a condensed guide for deploying the News Summarizer system. For full det
 - [ ] Hugo installed
 - [ ] Cloudflare account created
 - [ ] OpenAI API key obtained
-- [ ] NewsAPI key obtained
 - [ ] GitHub personal access token created (with `repo` scope)
+- [ ] No NewsAPI key needed - uses Google News RSS (free)
 
 ## Quick Setup (5 Steps)
 
@@ -37,7 +37,6 @@ cd worker
 npm install -g wrangler
 wrangler login
 wrangler secret put OPENAI_API_KEY
-wrangler secret put NEWSAPI_KEY
 wrangler secret put GITHUB_TOKEN
 wrangler secret put GITHUB_BRANCH
 
@@ -118,14 +117,13 @@ wrangler secret list  # Verify secrets are set
 
 **API errors?**
 - OpenAI: Check billing and API key validity
-- NewsAPI: Verify you're within free tier limits (100 req/day)
+- RSS feeds: Check worker logs for specific feed errors
 - GitHub: Ensure token has `repo` scope
 
 ## Environment Variables Reference
 
 Required secrets for Cloudflare Worker:
 - `OPENAI_API_KEY` - OpenAI API key
-- `NEWSAPI_KEY` - NewsAPI key
 - `GITHUB_TOKEN` - GitHub personal access token
 - `GITHUB_BRANCH` - Target branch (usually "main")
 
@@ -137,7 +135,7 @@ Note: `GITHUB_OWNER` and `GITHUB_REPO` are configured in `wrangler.toml` under t
 
 ## Cost Estimates (Free Tiers)
 
-- **NewsAPI**: Free (100 requests/day)
+- **Google News RSS**: Free (no API key, no limits)
 - **Cloudflare Workers**: Free (100,000 requests/day)
 - **Cloudflare Pages**: Free (500 builds/month, unlimited sites)
 - **GitHub**: Free (unlimited public repos)

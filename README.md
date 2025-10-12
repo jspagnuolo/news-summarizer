@@ -5,7 +5,7 @@ An automated daily news summarization system that fetches news articles, summari
 ## Overview
 
 This system automatically:
-1. **Fetches** news articles daily using NewsAPI
+1. **Fetches** news articles daily using Google News RSS feeds
 2. **Summarizes** them using OpenAI (GPT-4)
 3. **Generates** Hugo markdown files organized by topic
 4. **Commits** summaries to GitHub
@@ -17,7 +17,7 @@ This system automatically:
 ## Tech Stack
 - **Cloudflare Workers** - Cron-triggered automation
 - **OpenAI API** - AI-powered summarization
-- **NewsAPI** - News article fetching
+- **Google News RSS** - News article fetching (no API key required)
 - **Hugo** - Static site generator
 - **Cloudflare Pages** - Hosting and deployment
 - **GitHub API** - Automated commits
@@ -52,8 +52,8 @@ news-summarizer/
 - Hugo (install from https://gohugo.io/installation/)
 - Cloudflare account (free tier works)
 - OpenAI API key
-- NewsAPI key (free tier: 100 requests/day)
 - GitHub account and personal access token
+- No NewsAPI key needed - uses Google News RSS feeds (free, no limits)
 
 ### Step 1: Clone and Install Dependencies
 
@@ -77,7 +77,6 @@ cd ..
 
 2. **Get your API keys:**
    - **OpenAI API Key**: https://platform.openai.com/api-keys
-   - **NewsAPI Key**: https://newsapi.org/register
    - **GitHub Personal Access Token**:
      - Go to GitHub Settings > Developer Settings > Personal Access Tokens > Tokens (classic)
      - Create a token with `repo` scope (full control of private repositories)
@@ -85,7 +84,6 @@ cd ..
 3. **Edit `.env` file with your actual keys:**
    ```
    OPENAI_API_KEY=sk-proj-your-actual-key-here
-   NEWSAPI_KEY=your-newsapi-key-here
    GITHUB_TOKEN=ghp_your-github-token-here
    GITHUB_BRANCH=main
    ```
@@ -112,7 +110,6 @@ cd ..
 
    # Set each secret (you'll be prompted to enter the value)
    wrangler secret put OPENAI_API_KEY
-   wrangler secret put NEWSAPI_KEY
    wrangler secret put GITHUB_TOKEN
    wrangler secret put GITHUB_BRANCH
 
@@ -226,12 +223,12 @@ Edit `config/topics.json`:
 
 - **`id`**: Unique identifier (lowercase, use hyphens, no spaces)
 - **`name`**: Display name shown on the website
-- **`query`**: NewsAPI search query (use OR for multiple terms, quotes for phrases)
+- **`query`**: Search query for Google News (e.g., "Venezuela Maduro")
 - **`active`**: Set to `false` to temporarily disable a topic
-- **`sources`**: Array of specific news sources (e.g., `["bbc-news", "cnn"]`)
-- **`excludeDomains`**: Domains to exclude (e.g., `["example.com"]`)
-- **`language`**: Two-letter language code (default: `"en"`)
-- **`sortBy`**: Sort order: `"publishedAt"`, `"relevancy"`, or `"popularity"`
+- **`rssFeeds`**: Array of RSS feed configurations:
+  - `type`: Always `"google_news"` for now
+  - `language`: Two-letter language code (e.g., `"en"`, `"es"`)
+  - `region`: Two-letter region code (e.g., `"US"`, `"VE"`)
 
 ### Commit and Push Changes
 
@@ -243,22 +240,24 @@ git push origin main
 
 The worker will automatically pick up the new topic on its next run!
 
-## API Rate Limits & Considerations
+## API Considerations
 
-### NewsAPI Free Tier Limits
-- **100 requests per day** across ALL topics
-- Plan accordingly: 5 topics = ~20 requests per topic per day max
-- Articles from last 1 month only on free tier
+### Google News RSS
+- **No API key required** - completely free
+- **No rate limits** on RSS feeds
+- Gets the most recent and relevant news articles
+- Supports multiple languages and regions
+- Articles are from various reputable sources
 
 ### OpenAI API Costs
 - Uses `gpt-4o-mini` model (cost-effective)
 - Approximately $0.01-0.05 per summary
 - Set up billing alerts in OpenAI dashboard
 
-### Rate Limit Strategy
+### Processing Strategy
 - Worker processes topics sequentially with 2-second delays
 - Handles failures gracefully (one topic failure won't stop others)
-- Consider upgrading NewsAPI or reducing topics if hitting limits
+- Can fetch from multiple RSS feeds per topic (e.g., English + Spanish sources)
 
 ## Troubleshooting
 
@@ -279,7 +278,7 @@ The worker will automatically pick up the new topic on its next run!
 ### API errors
 
 1. **OpenAI errors**: Check API key and billing status
-2. **NewsAPI errors**: Verify API key and check rate limits
+2. **RSS feed errors**: Check worker logs for specific feed failures
 3. **GitHub errors**: Ensure personal access token has `repo` scope
 
 ### Hugo site not updating
@@ -322,7 +321,7 @@ Edit the OpenAI prompt in `worker/index.js` (look for the `summarizeArticles` fu
 │  ┌─────────────────────────────────────────────────┐   │
 │  │  1. Read topics.json from GitHub                 │   │
 │  │  2. For each active topic:                       │   │
-│  │     - Fetch articles (NewsAPI)                   │   │
+│  │     - Fetch articles (Google News RSS)           │   │
 │  │     - Summarize with AI (OpenAI)                 │   │
 │  │     - Generate Hugo markdown                     │   │
 │  │     - Commit to GitHub (GitHub API)              │   │
@@ -359,6 +358,6 @@ For issues or questions:
 
 Built with:
 - [OpenAI GPT-4](https://openai.com/)
-- [NewsAPI](https://newsapi.org/)
+- [Google News RSS](https://news.google.com/)
 - [Hugo](https://gohugo.io/)
 - [Cloudflare Workers & Pages](https://www.cloudflare.com/)

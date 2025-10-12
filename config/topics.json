@@ -3,17 +3,24 @@
     {
       "id": "venezuela",
       "name": "Venezuela",
-      "query": "Venezuela OR Maduro OR \"Venezuelan government\" OR \"Venezuelan opposition\"",
+      "query": "Venezuela Maduro",
       "active": true,
-      "sources": [],
-      "excludeDomains": [],
-      "language": "en",
-      "sortBy": "publishedAt"
+      "rssFeeds": [
+        {
+          "type": "google_news",
+          "language": "es",
+          "region": "VE"
+        },
+        {
+          "type": "google_news",
+          "language": "en",
+          "region": "US"
+        }
+      ]
     }
   ],
   "settings": {
     "maxArticlesPerTopic": 10,
-    "maxRequestsPerDay": 100,
     "articleMaxAge": "7d"
   }
 }
