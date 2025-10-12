@@ -325,7 +325,31 @@ draft: false
 
 `;
 
-  // Venezuelan Perspective Section
+  // Overall Summary Section (FIRST)
+  const overallSection = `## Overall Summary
+
+${summary.overallSummary || 'Unable to generate overall summary.'}
+
+`;
+
+  // International Perspective Section (SECOND)
+  const internationalSection = internationalArticles.length > 0
+    ? `## International Perspective (US/International Sources)
+
+### Key Points
+
+${summary.internationalPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
+
+${summary.internationalPerspective?.summary || 'No international sources available for this summary.'}
+
+`
+    : `## International Perspective (US/International Sources)
+
+No international sources available for this time period.
+
+`;
+
+  // Venezuelan Perspective Section (THIRD)
   const venezuelanSection = venezuelanArticles.length > 0
     ? `## Inside Venezuela (Venezuelan Sources)
 
@@ -342,24 +366,7 @@ No Venezuelan sources available for this time period.
 
 `;
 
-  // International Perspective Section
-  const internationalSection = internationalArticles.length > 0
-    ? `## International Perspective
-
-### Key Points
-
-${summary.internationalPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
-
-${summary.internationalPerspective?.summary || 'No international sources available for this summary.'}
-
-`
-    : `## International Perspective
-
-No international sources available for this time period.
-
-`;
-
-  // Key Differences Section
+  // Key Differences Section (FOURTH)
   const differencesSection = summary.keyDifferences && summary.keyDifferences.length > 0
     ? `## Key Differences in Coverage
 
@@ -368,14 +375,7 @@ ${summary.keyDifferences.map(diff => `- ${diff}`).join('\n')}
 `
     : '';
 
-  // Overall Summary Section
-  const overallSection = `## Overall Summary
-
-${summary.overallSummary || 'Unable to generate overall summary.'}
-
-`;
-
-  // Sources Section with language/region tags
+  // Sources Section with language/region tags (LAST)
   const sourcesSection = `## Sources
 
 This summary is based on ${articles.length} article${articles.length !== 1 ? 's' : ''} from the following sources:
@@ -388,7 +388,7 @@ ${articles.map((article, idx) => {
   }).join('\n')}
 `;
 
-  return frontMatter + venezuelanSection + internationalSection + differencesSection + overallSection + sourcesSection;
+  return frontMatter + overallSection + internationalSection + venezuelanSection + differencesSection + sourcesSection;
 }
 
 // ============================================================================

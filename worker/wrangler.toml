@@ -7,9 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 GITHUB_REPO = "news-summarizer"
 GITHUB_OWNER = "jspagnuolo"
 
-# Cron trigger - runs daily at 9 AM UTC
+# Cron trigger - runs daily at 4 AM UTC
 [triggers]
-crons = ["0 9 * * *"]
+crons = ["0 4 * * *"]
 
 # Environment variables (set these in Cloudflare dashboard)
 # These are just placeholders - actual secrets must be configured in Cloudflare Workers dashboard
