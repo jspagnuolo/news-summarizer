@@ -316,10 +316,10 @@ async function commitToGitHub(path, content, message, env) {
 // ============================================================================
 
 /**
- * Purges Cloudflare cache for the entire site
+ * Purges Cloudflare cache for news.spagnuolo.biz only
  */
 async function purgeCloudflareCache(env) {
-  console.log('Purging Cloudflare cache...');
+  console.log('Purging Cloudflare cache for news.spagnuolo.biz...');
 
   // If CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN are not set, skip cache purge
   if (!env.CLOUDFLARE_ZONE_ID || !env.CLOUDFLARE_API_TOKEN) {
@@ -337,7 +337,7 @@ async function purgeCloudflareCache(env) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        purge_everything: true
+        prefixes: ['https://news.spagnuolo.biz/']
       })
     });
 
@@ -347,7 +347,7 @@ async function purgeCloudflareCache(env) {
     }
 
     const result = await response.json();
-    console.log('✓ Successfully purged Cloudflare cache');
+    console.log('✓ Successfully purged Cloudflare cache for news.spagnuolo.biz');
     return { success: true, result };
 
   } catch (error) {

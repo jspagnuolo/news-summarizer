@@ -1,4 +1,4 @@
-baseURL = "https://news-summarizer-ece.pages.dev/"
+baseURL = "https://news.spagnuolo.biz/"
 languageCode = "en-us"
 title = "News Summarizer"
 theme = "news-theme"
