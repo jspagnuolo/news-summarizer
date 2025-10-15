@@ -62,22 +62,159 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
   }
 }
 
+/**
+ * Calculates Jaccard similarity between two strings based on word sets
+ */
+function jaccardSimilarity(str1, str2) {
+  if (!str1 || !str2) return 0;
+
+  // Convert to lowercase and split into word sets
+  const set1 = new Set(str1.toLowerCase().split(/\s+/).filter(word => word.length > 2));
+  const set2 = new Set(str2.toLowerCase().split(/\s+/).filter(word => word.length > 2));
+
+  // Handle edge cases
+  if (set1.size === 0 && set2.size === 0) return 1;
+  if (set1.size === 0 || set2.size === 0) return 0;
+
+  // Calculate intersection and union
+  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+
+  return intersection.size / union.size;
+}
+
+/**
+ * Removes duplicate or highly similar articles, preferring articles from underrepresented sources
+ */
+function deduplicateArticles(articles, threshold = 0.75) {
+  if (!articles || articles.length === 0) return [];
+
+  console.log(`🔍 Starting deduplication with ${articles.length} articles (threshold: ${threshold})`);
+
+  // Count articles by region to determine which sources are underrepresented
+  const regionCounts = {};
+  articles.forEach(article => {
+    const region = article.metadata?.region || 'unknown';
+    regionCounts[region] = (regionCounts[region] || 0) + 1;
+  });
+
+  const uniqueArticles = [];
+  const duplicateInfo = [];
+
+  for (const article of articles) {
+    let isDuplicate = false;
+
+    // Check similarity against all articles already in the unique set
+    for (const uniqueArticle of uniqueArticles) {
+      const similarity = jaccardSimilarity(article.title, uniqueArticle.title);
+
+      if (similarity >= threshold) {
+        isDuplicate = true;
+        duplicateInfo.push({
+          kept: uniqueArticle.title.substring(0, 50) + '...',
+          duplicate: article.title.substring(0, 50) + '...',
+          similarity: similarity.toFixed(2)
+        });
+        break;
+      }
+    }
+
+    if (!isDuplicate) {
+      uniqueArticles.push(article);
+    }
+  }
+
+  if (duplicateInfo.length > 0) {
+    console.log(`   Removed ${duplicateInfo.length} duplicate/similar article(s)`);
+    duplicateInfo.slice(0, 3).forEach(info => {
+      console.log(`   - Similarity ${info.similarity}: Kept "${info.kept}", removed "${info.duplicate}"`);
+    });
+    if (duplicateInfo.length > 3) {
+      console.log(`   - ... and ${duplicateInfo.length - 3} more`);
+    }
+  } else {
+    console.log(`   No duplicates found`);
+  }
+
+  return uniqueArticles;
+}
+
+/**
+ * Balances article selection to ensure fair representation from different perspectives
+ */
+function balanceArticleSelection(articles, maxArticles, minArticlesPerFeed) {
+  if (!articles || articles.length === 0) return [];
+
+  // Separate articles by region
+  const venezuelanArticles = articles.filter(a => a.metadata?.region === 'VE');
+  const internationalArticles = articles.filter(a => a.metadata?.region !== 'VE');
+
+  console.log(`\n⚖️  Balancing article selection:`);
+  console.log(`   Venezuelan articles: ${venezuelanArticles.length}`);
+  console.log(`   International articles: ${internationalArticles.length}`);
+
+  // Check if minimum requirements are met
+  const minRequired = minArticlesPerFeed || 0;
+  if (minRequired > 0) {
+    if (venezuelanArticles.length < minRequired) {
+      console.log(`   ⚠️  Only ${venezuelanArticles.length} Venezuelan articles found (minimum: ${minRequired})`);
+    }
+    if (internationalArticles.length < minRequired) {
+      console.log(`   ⚠️  Only ${internationalArticles.length} international articles found (minimum: ${minRequired})`);
+    }
+  }
+
+  // Balance the selection
+  const targetPerSource = Math.floor(maxArticles / 2);
+
+  // Take up to target from each source
+  const selectedVenezuelan = venezuelanArticles.slice(0, targetPerSource);
+  const selectedInternational = internationalArticles.slice(0, targetPerSource);
+
+  // Combine and check if we have room for more
+  let balanced = [...selectedVenezuelan, ...selectedInternational];
+
+  // If we haven't reached maxArticles, add more from whichever source has extras
+  if (balanced.length < maxArticles) {
+    const remaining = maxArticles - balanced.length;
+    const extraVenezuelan = venezuelanArticles.slice(targetPerSource, targetPerSource + remaining);
+    const extraInternational = internationalArticles.slice(targetPerSource, targetPerSource + remaining);
+
+    // Alternate adding extras to maintain balance
+    const extras = [];
+    for (let i = 0; i < remaining; i++) {
+      if (i % 2 === 0 && extraVenezuelan.length > Math.floor(i / 2)) {
+        extras.push(extraVenezuelan[Math.floor(i / 2)]);
+      } else if (extraInternational.length > Math.floor(i / 2)) {
+        extras.push(extraInternational[Math.floor(i / 2)]);
+      }
+    }
+
+    balanced = [...balanced, ...extras];
+  }
+
+  // Final count
+  const finalVenezuelan = balanced.filter(a => a.metadata?.region === 'VE').length;
+  const finalInternational = balanced.filter(a => a.metadata?.region !== 'VE').length;
+
+  console.log(`   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalInternational} International (total: ${balanced.length})`);
+
+  return balanced;
+}
+
 // ============================================================================
 // NEWS FETCHING (Google News RSS)
 // ============================================================================
 
 /**
  * Builds Google News RSS feed URL
+ * @param {string} query - The search query (can include boolean operators)
+ * @param {string} language - Language code (e.g., 'es', 'en')
+ * @param {string} region - Region code (e.g., 'VE', 'US')
  */
 function buildGoogleNewsUrl(query, language, region) {
-  const params = new URLSearchParams({
-    q: query,
-    hl: `${language}-${region}`,
-    gl: region,
-    ceid: `${region}:${language}`
-  });
-
-  return `https://news.google.com/rss/search?${params.toString()}`;
+  const encodedQuery = encodeURIComponent(query);
+  return `https://news.google.com/rss/search?q=${encodedQuery}&hl=${language}&gl=${region}&ceid=${region}:${language}`;
 }
 
 /**
@@ -140,11 +277,14 @@ async function parseRSSFeed(url, language, region) {
  * Fetches news articles for a specific topic using Google News RSS feeds
  */
 async function fetchNewsForTopic(topic, settings) {
-  console.log(`Fetching news for topic: ${topic.name}`);
+  console.log(`\n📰 Fetching news for topic: ${topic.name}`);
 
-  const allArticles = [];
+  const feedArticles = {}; // Track articles per feed
   const maxArticles = settings.maxArticlesPerTopic || 10;
   const maxAgeDays = parseInt(settings.articleMaxAge || '7d');
+  const minArticlesPerFeed = settings.minArticlesPerFeed;
+  const deduplicationThreshold = settings.deduplicationSimilarityThreshold;
+
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
 
@@ -154,43 +294,80 @@ async function fetchNewsForTopic(topic, settings) {
       if (feed.type !== 'google_news') continue;
 
       try {
-        const url = buildGoogleNewsUrl(topic.query, feed.language, feed.region);
-        console.log(`Fetching feed: ${url}`);
+        // Use per-feed query if available, otherwise fall back to topic query (backward compatibility)
+        const query = feed.query || topic.query;
+
+        if (!query) {
+          console.log(`   ⚠️  No query specified for ${feed.language}-${feed.region} feed, skipping`);
+          continue;
+        }
+
+        const url = buildGoogleNewsUrl(query, feed.language, feed.region);
+
+        console.log(`\n   📡 Fetching ${feed.language}-${feed.region} feed...`);
+        console.log(`   Query: "${query.substring(0, 80)}${query.length > 80 ? '...' : ''}"`);
 
         const articles = await retryWithBackoff(async () => {
           return await parseRSSFeed(url, feed.language, feed.region);
         });
 
-        // Filter by date and add to collection
+        // Filter by date
         const recentArticles = articles.filter(article => {
           const pubDate = new Date(article.publishedAt);
           return pubDate >= cutoffDate;
         });
 
-        console.log(`Found ${recentArticles.length} recent articles from ${feed.language}-${feed.region} feed`);
-        allArticles.push(...recentArticles);
+        const feedKey = `${feed.language}-${feed.region}`;
+        feedArticles[feedKey] = recentArticles;
+
+        console.log(`   ✅ Found: ${recentArticles.length} articles`);
 
       } catch (error) {
-        console.error(`Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`);
+        console.error(`   ❌ Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`);
         // Continue with other feeds
       }
     }
 
-    // Remove duplicates by URL
-    const uniqueArticles = Array.from(
+    // Combine all articles
+    const allArticles = Object.values(feedArticles).flat();
+
+    if (allArticles.length === 0) {
+      console.log(`\n   ⚠️  No articles found for ${topic.name}`);
+      return [];
+    }
+
+    console.log(`\n   📊 Total articles collected: ${allArticles.length}`);
+
+    // Remove duplicates by URL first
+    const uniqueByUrl = Array.from(
       new Map(allArticles.map(a => [a.url, a])).values()
     );
 
-    // Sort by date (newest first) and limit
-    const sortedArticles = uniqueArticles
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-      .slice(0, maxArticles);
+    console.log(`   After URL deduplication: ${uniqueByUrl.length}`);
 
-    console.log(`Total unique articles after filtering: ${sortedArticles.length}`);
-    return sortedArticles;
+    // Apply similarity-based deduplication if threshold is set
+    let deduplicated = uniqueByUrl;
+    if (deduplicationThreshold && deduplicationThreshold > 0) {
+      deduplicated = deduplicateArticles(uniqueByUrl, deduplicationThreshold);
+    }
+
+    // Sort by date (newest first)
+    const sorted = deduplicated.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+    // Balance articles if minArticlesPerFeed is set
+    let finalArticles;
+    if (minArticlesPerFeed && minArticlesPerFeed > 0) {
+      finalArticles = balanceArticleSelection(sorted, maxArticles, minArticlesPerFeed);
+    } else {
+      // Just take the top maxArticles
+      finalArticles = sorted.slice(0, maxArticles);
+      console.log(`\n   ✅ Selected top ${finalArticles.length} articles (no balancing)`);
+    }
+
+    return finalArticles;
 
   } catch (error) {
-    console.error(`Error fetching news for ${topic.name}:`, error.message);
+    console.error(`\n   ❌ Error fetching news for ${topic.name}:`, error.message);
     throw error;
   }
 }
