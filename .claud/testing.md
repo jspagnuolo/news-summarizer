@@ -1,18 +1,34 @@
 # Testing Strategy
 
 ## Local Testing
+
+### Option 1: Test Against Production (Recommended)
+```bash
+# Use production worker with manual trigger
+curl -X POST https://news-summarizer-worker.digitalimages.workers.dev/trigger
+```
+
+### Option 2: Local Development (Wrangler Limitations)
+Wrangler v3 doesn't automatically read `.env` files. For full local testing, use Wrangler secrets or test against production.
+
 ```bash
 # Install dependencies
 cd worker && npm install
 
-# Run local dev server (Miniflare)
+# For quick local server (just checks worker loads):
 npx wrangler dev --local
 
-# Trigger worker locally
-curl -X POST http://localhost:8787/trigger
+# Test basic endpoint
+curl http://localhost:8787/
 
-# Build Hugo site locally
-cd ../hugo-site && hugo server -D
+# Note: /trigger endpoint requires secrets to be set in Cloudflare
+# For full testing, use production trigger or Wrangler v4+
+```
+
+### Option 3: Hugo Site Local Testing
+```bash
+cd hugo-site && hugo server -D
+# Visit http://localhost:1313
 ```
 
 ## Test Types
