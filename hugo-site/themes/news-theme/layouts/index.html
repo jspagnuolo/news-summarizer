@@ -2,7 +2,7 @@
 
 {{ define "main" }}
 <div class="home">
-    <h1 style="text-align: center; margin-bottom: 2rem; color: #1f2937;">Latest News Summaries</h1>
+    <h1>Latest News Summaries</h1>
 
     {{ $pages := where .Site.RegularPages "Section" "summaries" }}
     {{ range first 10 $pages }}
@@ -16,6 +16,7 @@
         <div class="summary-excerpt">
             {{ .Summary }}
         </div>
+        <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
     {{ else }}
     <p style="text-align: center; color: #6b7280; padding: 3rem;">

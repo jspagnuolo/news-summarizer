@@ -511,7 +511,7 @@ ${summary.overallSummary || 'Unable to generate overall summary.'}
 
   // International Perspective Section (SECOND)
   const internationalSection = internationalArticles.length > 0
-    ? `## International Perspective (US/International Sources)
+    ? `## US Perspective (US Sources)
 
 ### Key Points
 
@@ -520,7 +520,7 @@ ${summary.internationalPerspective?.bulletPoints?.map(point => `- ${point}`).joi
 ${summary.internationalPerspective?.summary || 'No international sources available for this summary.'}
 
 `
-    : `## International Perspective (US/International Sources)
+    : `## US Perspective (US Sources)
 
 No international sources available for this time period.
 
