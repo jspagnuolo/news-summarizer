@@ -6,9 +6,12 @@ package-lock.json
 .env
 .env.local
 .env.*.local
-worker/.enf
+.env.production
+!.env.example
+worker/.env
 
-# Cloudflare
+# Build outputs
+dist/
 .wrangler/
 wrangler.toml.local
 
@@ -16,6 +19,11 @@ wrangler.toml.local
 hugo-site/public/
 hugo-site/resources/
 hugo-site/.hugo_build.lock
+
+# Testing
+coverage/
+.vitest/
+test-results/
 
 # OS files
 .DS_Store
@@ -30,3 +38,10 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+temp/
+tmp/
+*.tmp

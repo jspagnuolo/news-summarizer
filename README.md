@@ -12,7 +12,11 @@ This system automatically:
 5. **Deploys** to Cloudflare Pages automatically
 
 ## Topics Currently Tracked
-- Venezuela (more can be easily added via configuration)
+- **Venezuela** - Dual perspective (Venezuelan sources vs International sources)
+  - Spanish/Venezuelan sources for inside perspective
+  - English/US sources for international perspective
+  - Automatic balancing ensures equal representation
+  - 20 articles per summary (10 per perspective)
 
 ## Tech Stack
 - **Cloudflare Workers** - Cron-triggered automation
@@ -22,16 +26,38 @@ This system automatically:
 - **Cloudflare Pages** - Hosting and deployment
 - **GitHub API** - Automated commits
 
+## Recent Enhancements
+
+### Phase 1 (October 2025)
+- **Per-Feed Queries**: Each RSS feed can have custom search queries
+- **Article Balancing**: Ensures minimum articles from each perspective
+- **Smart Deduplication**: Removes similar articles using Jaccard similarity
+- **Comprehensive Documentation**: Added `.claud/` context files for development
+- **Project Structure**: Added ARCHITECTURE.md, CHANGELOG.md, and improved README
+
+### Coming Soon
+- Additional topics (Argentina, Cuba)
+- Testing infrastructure
+- Code modularization
+- Enhanced error handling
+
 ## Project Structure
 
 ```
 news-summarizer/
+├── .claud/                      # Claude Code context files
+│   ├── context.md               # Project overview
+│   ├── conventions.md           # Coding standards
+│   ├── testing.md               # Test strategy
+│   ├── deployment.md            # Deployment guide
+│   └── roadmap.md               # Development roadmap
 ├── config/
 │   └── topics.json              # Topics configuration (easy to edit!)
 ├── worker/
 │   ├── index.js                 # Cloudflare Worker code
 │   ├── package.json             # Worker dependencies
-│   └── wrangler.toml            # Cloudflare Worker config
+│   ├── wrangler.toml            # Cloudflare Worker config
+│   └── .env.example             # Environment variables template
 ├── hugo-site/
 │   ├── hugo.toml                # Hugo configuration
 │   ├── content/
@@ -40,7 +66,8 @@ news-summarizer/
 │   │   └── archive/             # Archive page
 │   └── themes/
 │       └── news-theme/          # Custom Hugo theme
-├── .env.example                 # Environment variables template
+├── ARCHITECTURE.md              # System architecture documentation
+├── CHANGELOG.md                 # Version history and changes
 └── README.md                    # This file
 ```
 
@@ -313,35 +340,33 @@ crons = ["0 9 * * *"]  # 9 AM UTC daily
 
 Edit the OpenAI prompt in `worker/index.js` (look for the `summarizeArticles` function).
 
-## Architecture Diagram
+## Architecture
 
+For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+Quick overview:
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Cloudflare Worker (Cron: Daily 9 AM UTC)               │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │  1. Read topics.json from GitHub                 │   │
-│  │  2. For each active topic:                       │   │
-│  │     - Fetch articles (Google News RSS)           │   │
-│  │     - Summarize with AI (OpenAI)                 │   │
-│  │     - Generate Hugo markdown                     │   │
-│  │     - Commit to GitHub (GitHub API)              │   │
-│  └─────────────────────────────────────────────────┘   │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-         ┌───────────────────────┐
-         │   GitHub Repository    │
-         │  - topics.json         │
-         │  - hugo-site/content/  │
-         └───────────┬────────────┘
-                     │ (webhook)
-                     ▼
-         ┌───────────────────────┐
-         │  Cloudflare Pages      │
-         │  - Auto-build Hugo     │
-         │  - Deploy static site  │
-         └───────────────────────┘
+Cloudflare Cron (Daily 4AM UTC)
+         ↓
+Cloudflare Worker
+  - Fetch RSS feeds (Google News)
+  - Deduplicate & balance articles
+  - Summarize with OpenAI
+  - Generate Hugo markdown
+  - Commit to GitHub
+         ↓
+GitHub Repository
+         ↓
+Cloudflare Pages (auto-deploy)
+         ↓
+Static Site (news.spagnuolo.biz)
 ```
+
+## Documentation
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+- **[.claud/](.claud/)** - Development context files (for AI-assisted development)
 
 ## License
 
