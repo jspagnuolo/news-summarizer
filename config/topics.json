@@ -9,13 +9,15 @@
           "type": "google_news",
           "language": "es",
           "region": "VE",
-          "query": "Venezuela (\"militar estadounidense\" OR \"despliegue naval\" OR \"buques de guerra\" OR sanciones OR \"política estadounidense\" OR \"Estados Unidos\" OR diplomacia OR humanitario OR Maduro OR petróleo OR OPEP OR China OR Rusia OR Cuba OR \"crisis económica\" OR migración OR \"Caribe\" OR \"ejercicios militares\" OR \"presencia militar\" OR política OR economía OR gobierno OR oposición)"
+          "query": "Venezuela (\"militar estadounidense\" OR \"despliegue naval\" OR \"buques de guerra\" OR sanciones OR \"política estadounidense\" OR \"Estados Unidos\" OR diplomacia OR humanitario OR Maduro OR petróleo OR OPEP OR China OR Rusia OR Cuba OR \"crisis económica\" OR migración OR \"Caribe\" OR \"ejercicios militares\" OR \"presencia militar\" OR política OR economía OR gobierno OR oposición)",
+          "perspective": "venezuelan"
         },
         {
           "type": "google_news",
           "language": "en",
           "region": "US",
-          "query": "Venezuela (\"US military\" OR \"US Navy\" OR \"naval deployment\" OR \"military buildup\" OR \"warships\" OR \"Caribbean\" OR \"military exercises\" OR \"offshore operations\" OR sanctions OR \"US policy\" OR diplomacy OR Maduro OR oil OR OPEC OR China OR Russia OR Cuba OR \"economic crisis\" OR migration OR humanitarian OR \"military presence\" OR \"geopolitical\" OR politics OR economy OR opposition)"
+          "query": "Venezuela (\"US military\" OR \"US Navy\" OR \"naval deployment\" OR \"military buildup\" OR \"warships\" OR \"Caribbean\" OR \"military exercises\" OR \"offshore operations\" OR sanctions OR \"US policy\" OR diplomacy OR Maduro OR oil OR OPEC OR China OR Russia OR Cuba OR \"economic crisis\" OR migration OR humanitarian OR \"military presence\" OR \"geopolitical\" OR politics OR economy OR opposition)",
+          "perspective": "us"
         }
       ]
     }

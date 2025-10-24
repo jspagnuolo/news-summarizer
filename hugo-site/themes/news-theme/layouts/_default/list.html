@@ -5,7 +5,7 @@
     <h1>{{ .Title }}</h1>
 
     {{ if .Content }}
-    <div style="margin-bottom: 2rem;">
+    <div class="content-intro">
         {{ .Content }}
     </div>
     {{ end }}
@@ -23,7 +23,7 @@
         </div>
     </article>
     {{ else }}
-    <p style="text-align: center; color: #6b7280; padding: 3rem;">
+    <p class="empty-state">
         No summaries available yet.
     </p>
     {{ end }}

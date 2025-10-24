@@ -142,25 +142,40 @@ function deduplicateArticles(articles, threshold = 0.75) {
 /**
  * Balances article selection to ensure fair representation from different perspectives
  */
-function balanceArticleSelection(articles, maxArticles, minArticlesPerFeed) {
+function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspective) {
   if (!articles || articles.length === 0) return [];
 
-  // Separate articles by region
-  const venezuelanArticles = articles.filter(a => a.metadata?.region === 'VE');
-  const internationalArticles = articles.filter(a => a.metadata?.region !== 'VE');
+  const venezuelanArticles = [];
+  const usArticles = [];
+  const otherArticles = [];
+
+  for (const article of articles) {
+    const perspective = (article.metadata?.perspective || article.metadata?.feedType || '').toLowerCase();
+
+    if (perspective === 'venezuelan' || article.metadata?.region === 'VE') {
+      venezuelanArticles.push(article);
+    } else if (perspective === 'us' || article.metadata?.region === 'US') {
+      usArticles.push(article);
+    } else {
+      otherArticles.push(article);
+    }
+  }
 
   console.log(`\n⚖️  Balancing article selection:`);
   console.log(`   Venezuelan articles: ${venezuelanArticles.length}`);
-  console.log(`   International articles: ${internationalArticles.length}`);
+  console.log(`   US articles: ${usArticles.length}`);
+  if (otherArticles.length > 0) {
+    console.log(`   Other articles: ${otherArticles.length}`);
+  }
 
   // Check if minimum requirements are met
-  const minRequired = minArticlesPerFeed || 0;
+  const minRequired = minArticlesPerPerspective || 0;
   if (minRequired > 0) {
     if (venezuelanArticles.length < minRequired) {
       console.log(`   ⚠️  Only ${venezuelanArticles.length} Venezuelan articles found (minimum: ${minRequired})`);
     }
-    if (internationalArticles.length < minRequired) {
-      console.log(`   ⚠️  Only ${internationalArticles.length} international articles found (minimum: ${minRequired})`);
+    if (usArticles.length < minRequired) {
+      console.log(`   ⚠️  Only ${usArticles.length} US articles found (minimum: ${minRequired})`);
     }
   }
 
@@ -169,35 +184,43 @@ function balanceArticleSelection(articles, maxArticles, minArticlesPerFeed) {
 
   // Take up to target from each source
   const selectedVenezuelan = venezuelanArticles.slice(0, targetPerSource);
-  const selectedInternational = internationalArticles.slice(0, targetPerSource);
+  const selectedUs = usArticles.slice(0, targetPerSource);
 
   // Combine and check if we have room for more
-  let balanced = [...selectedVenezuelan, ...selectedInternational];
+  let balanced = [...selectedVenezuelan, ...selectedUs];
 
   // If we haven't reached maxArticles, add more from whichever source has extras
   if (balanced.length < maxArticles) {
-    const remaining = maxArticles - balanced.length;
-    const extraVenezuelan = venezuelanArticles.slice(targetPerSource, targetPerSource + remaining);
-    const extraInternational = internationalArticles.slice(targetPerSource, targetPerSource + remaining);
+    const extraVenezuelan = venezuelanArticles.slice(targetPerSource);
+    const extraUs = usArticles.slice(targetPerSource);
 
-    // Alternate adding extras to maintain balance
-    const extras = [];
-    for (let i = 0; i < remaining; i++) {
-      if (i % 2 === 0 && extraVenezuelan.length > Math.floor(i / 2)) {
-        extras.push(extraVenezuelan[Math.floor(i / 2)]);
-      } else if (extraInternational.length > Math.floor(i / 2)) {
-        extras.push(extraInternational[Math.floor(i / 2)]);
+    let venezIndex = 0;
+    let usIndex = 0;
+
+    while (balanced.length < maxArticles && (venezIndex < extraVenezuelan.length || usIndex < extraUs.length)) {
+      if (venezIndex < extraVenezuelan.length) {
+        balanced.push(extraVenezuelan[venezIndex++]);
+        if (balanced.length >= maxArticles) break;
+      }
+
+      if (usIndex < extraUs.length) {
+        balanced.push(extraUs[usIndex++]);
       }
     }
+  }
 
-    balanced = [...balanced, ...extras];
+  if (balanced.length < maxArticles && otherArticles.length > 0) {
+    for (const article of otherArticles) {
+      balanced.push(article);
+      if (balanced.length >= maxArticles) break;
+    }
   }
 
   // Final count
-  const finalVenezuelan = balanced.filter(a => a.metadata?.region === 'VE').length;
-  const finalInternational = balanced.filter(a => a.metadata?.region !== 'VE').length;
+  const finalVenezuelan = balanced.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan' || a.metadata?.region === 'VE').length;
+  const finalUs = balanced.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us' || a.metadata?.region === 'US').length;
 
-  console.log(`   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalInternational} International (total: ${balanced.length})`);
+  console.log(`   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalUs} US (total: ${balanced.length})`);
 
   return balanced;
 }
@@ -220,7 +243,7 @@ function buildGoogleNewsUrl(query, language, region) {
 /**
  * Parses Google News RSS feed and returns articles with metadata
  */
-async function parseRSSFeed(url, language, region) {
+async function parseRSSFeed(url, language, region, perspective) {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_'
@@ -247,8 +270,13 @@ async function parseRSSFeed(url, language, region) {
     ? parsed.rss.channel.item
     : [parsed.rss.channel.item];
 
-  // Determine feed type based on language and region
-  const feedType = (language === 'es' && region === 'VE') ? 'venezuelan' : 'international';
+  const derivedPerspective = perspective
+    ? perspective.toLowerCase()
+    : (language === 'es' && region === 'VE')
+      ? 'venezuelan'
+      : region === 'US'
+        ? 'us'
+        : 'international';
 
   return items.map(item => {
     // Extract source from title (Google News format: "Article Title - Source Name")
@@ -267,7 +295,8 @@ async function parseRSSFeed(url, language, region) {
       metadata: {
         language: language,
         region: region,
-        feedType: feedType
+        feedType: derivedPerspective,
+        perspective: derivedPerspective
       }
     };
   });
@@ -308,7 +337,7 @@ async function fetchNewsForTopic(topic, settings) {
         console.log(`   Query: "${query.substring(0, 80)}${query.length > 80 ? '...' : ''}"`);
 
         const articles = await retryWithBackoff(async () => {
-          return await parseRSSFeed(url, feed.language, feed.region);
+          return await parseRSSFeed(url, feed.language, feed.region, feed.perspective);
         });
 
         // Filter by date
@@ -383,10 +412,14 @@ async function summarizeArticles(articles, topic, openai) {
   console.log(`Summarizing ${articles.length} articles for ${topic.name}`);
 
   // Separate articles by perspective
-  const venezuelanArticles = articles.filter(a => a.metadata?.feedType === 'venezuelan');
-  const internationalArticles = articles.filter(a => a.metadata?.feedType === 'international');
+  const venezuelanArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan');
+  const usArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us');
+  const fallbackArticles = articles.filter(a => !['venezuelan', 'us'].includes((a.metadata?.perspective || a.metadata?.feedType)));
 
-  console.log(`Venezuelan sources: ${venezuelanArticles.length}, International sources: ${internationalArticles.length}`);
+  console.log(`Venezuelan sources: ${venezuelanArticles.length}, US sources: ${usArticles.length}`);
+  if (fallbackArticles.length > 0) {
+    console.log(`Other sources detected: ${fallbackArticles.length}`);
+  }
 
   // Format Venezuelan articles
   const venezuelanText = venezuelanArticles.length > 0
@@ -400,9 +433,9 @@ Description: ${article.description || 'N/A'}
       }).join('\n\n')
     : 'No Venezuelan sources available';
 
-  // Format international articles
-  const internationalText = internationalArticles.length > 0
-    ? internationalArticles.map((article, idx) => {
+  // Format US articles
+  const usText = usArticles.length > 0
+    ? usArticles.map((article, idx) => {
         return `Article ${idx + 1}:
 Title: ${article.title}
 Source: ${article.source.name}
@@ -410,35 +443,30 @@ Published: ${article.publishedAt}
 Description: ${article.description || 'N/A'}
 ---`;
       }).join('\n\n')
-    : 'No international sources available';
+    : 'No United States sources available';
 
-  const prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from two different regional perspectives.
+  const prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from two regional perspectives.
 
 VENEZUELAN SOURCES (Spanish-language, from inside Venezuela):
 ${venezuelanText}
 
-INTERNATIONAL SOURCES (English-language, international media):
-${internationalText}
+UNITED STATES SOURCES (English-language, US media):
+${usText}
 
 Provide your response in the following JSON format:
 {
-  "venezuelanPerspective": {
-    "bulletPoints": ["point 1", "point 2", ...],
-    "summary": "2-3 sentence summary of Venezuelan sources"
-  },
-  "internationalPerspective": {
-    "bulletPoints": ["point 1", "point 2", ...],
-    "summary": "2-3 sentence summary of international sources"
-  },
+  "venezuelanPerspective": ["point 1", "point 2", ...],
+  "usPerspective": ["point 1", "point 2", ...],
   "keyDifferences": ["difference 1", "difference 2", ...],
-  "overallSummary": "2-3 paragraph synthesis of both perspectives"
+  "overallHighlights": ["highlight 1", "highlight 2", ...]
 }
 
 Requirements:
-- Venezuelan perspective: Summarize what Spanish-language Venezuelan sources are reporting. Note: Some articles may be in Spanish - extract the key information.
-- International perspective: Summarize what international/English sources are reporting
+- Venezuelan perspective: Pull core takeaways from Venezuelan outlets (translate Spanish where helpful)
+- US perspective: Pull core takeaways from United States outlets only
+- All responses must be concise bullet points (no standalone paragraphs)
 - Key differences: Identify 2-4 notable differences in coverage, emphasis, or framing between the two perspectives
-- Overall summary: Synthesize both perspectives into a coherent narrative
+- Overall highlights: Provide 3-5 bullet points that synthesize both perspectives into a single view
 - Maintain neutrality - present both perspectives fairly
 - If perspectives conflict, acknowledge this explicitly
 - If one perspective has no sources, note this and focus on available sources
@@ -485,8 +513,8 @@ function generateHugoMarkdown(topic, articles, summary, date) {
   const dateStr = formatDate(date);
 
   // Count articles by perspective
-  const venezuelanArticles = articles.filter(a => a.metadata?.feedType === 'venezuelan');
-  const internationalArticles = articles.filter(a => a.metadata?.feedType === 'international');
+  const venezuelanArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan');
+  const usArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us');
 
   const frontMatter = `---
 title: "${topic.name} News - ${dateStr}"
@@ -496,33 +524,49 @@ topicName: "${topic.name}"
 sources: [${sources.map(s => `"${s}"`).join(', ')}]
 articleCount: ${articles.length}
 venezuelanSources: ${venezuelanArticles.length}
-internationalSources: ${internationalArticles.length}
+usSources: ${usArticles.length}
 draft: false
 ---
 
 `;
 
-  // Overall Summary Section (FIRST)
-  const overallSection = `## Overall Summary
+  const extractPoints = value => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value.bulletPoints)) return value.bulletPoints;
+    if (typeof value === 'string' && value.trim()) return [value.trim()];
+    return [];
+  };
 
-${summary.overallSummary || 'Unable to generate overall summary.'}
+  const formatBulletList = (points, fallback) => {
+    if (!points || points.length === 0) {
+      return fallback;
+    }
+    return points.map(point => `- ${point}`).join('\n');
+  };
+
+  const venezuelanPoints = extractPoints(summary.venezuelanPerspective);
+  const usPoints = extractPoints(summary.usPerspective || summary.internationalPerspective);
+  const keyDifferences = extractPoints(summary.keyDifferences);
+  const overallHighlights = extractPoints(summary.overallHighlights || summary.overallSummary);
+
+  // Overall Highlights Section (FIRST)
+  const overallSection = `## Overall Highlights
+
+${formatBulletList(overallHighlights, '- Unable to generate combined highlights.')}
 
 `;
 
-  // International Perspective Section (SECOND)
-  const internationalSection = internationalArticles.length > 0
+  // US Perspective Section (SECOND)
+  const usSection = usArticles.length > 0
     ? `## US Perspective (US Sources)
 
-### Key Points
-
-${summary.internationalPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
-
-${summary.internationalPerspective?.summary || 'No international sources available for this summary.'}
+${formatBulletList(usPoints, '- No takeaways available for US sources.')}
 
 `
     : `## US Perspective (US Sources)
 
-No international sources available for this time period.
+- No United States sources available for this time period.
 
 `;
 
@@ -530,24 +574,20 @@ No international sources available for this time period.
   const venezuelanSection = venezuelanArticles.length > 0
     ? `## Inside Venezuela (Venezuelan Sources)
 
-### Key Points
-
-${summary.venezuelanPerspective?.bulletPoints?.map(point => `- ${point}`).join('\n') || '- No key points available'}
-
-${summary.venezuelanPerspective?.summary || 'No Venezuelan sources available for this summary.'}
+${formatBulletList(venezuelanPoints, '- No takeaways available for Venezuelan sources.')}
 
 `
     : `## Inside Venezuela (Venezuelan Sources)
 
-No Venezuelan sources available for this time period.
+- No Venezuelan sources available for this time period.
 
 `;
 
   // Key Differences Section (FOURTH)
-  const differencesSection = summary.keyDifferences && summary.keyDifferences.length > 0
+  const differencesSection = keyDifferences.length > 0
     ? `## Key Differences in Coverage
 
-${summary.keyDifferences.map(diff => `- ${diff}`).join('\n')}
+${formatBulletList(keyDifferences, '- Perspectives aligned with no notable differences.')}
 
 `
     : '';

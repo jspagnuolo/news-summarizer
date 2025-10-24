@@ -3,7 +3,7 @@
 {{ define "main" }}
 <div class="archive-page">
     <h1>Archive</h1>
-    <p style="text-align: center;  margin-bottom: 2rem;">
+    <p class="section-intro">
         View all news summaries across all topics, organized by date.
     </p>
 
@@ -13,10 +13,10 @@
         <div class="archive-item">
             <span class="archive-date">{{ .Date.Format "Jan 2, 2006" }}</span>
             <a href="{{ .Permalink }}">{{ .Title }}</a>
-            <span style="color: #6b7280; font-size: 0.9rem;">{{ .Params.topicName }}</span>
+            <span class="archive-topic">{{ .Params.topicName }}</span>
         </div>
         {{ else }}
-        <p style="text-align: center; color: #6b7280; padding: 3rem;">
+        <p class="empty-state">
             No summaries in the archive yet.
         </p>
         {{ end }}

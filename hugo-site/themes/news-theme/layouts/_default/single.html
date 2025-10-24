@@ -4,15 +4,16 @@
 <article class="summary-card">
     <h1>{{ .Title }}</h1>
 
-    <div class="summary-meta" style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
+    <div class="summary-meta summary-meta-panel">
         <span>📅 {{ .Date.Format "Monday, January 2, 2006" }}</span>
         <span>🏷️ {{ .Params.topicName }}</span>
         <span>📰 {{ .Params.articleCount }} articles</span>
         {{ if .Params.venezuelanSources }}
         <span class="perspective-badge venezuelan">🇻🇪 {{ .Params.venezuelanSources }} Venezuelan</span>
         {{ end }}
-        {{ if .Params.internationalSources }}
-        <span class="perspective-badge international">🌍 {{ .Params.internationalSources }} United States</span>
+        {{ $usSources := or .Params.usSources .Params.internationalSources }}
+        {{ if $usSources }}
+        <span class="perspective-badge us">🇺🇸 {{ $usSources }} United States</span>
         {{ end }}
         {{ if .Params.sources }}
         <span>🔖 Sources: {{ delimit .Params.sources ", " }}</span>
@@ -24,12 +25,12 @@
     </div>
 </article>
 
-<div style="margin-top: 2rem; text-align: center;">
-    <a href="{{ "/" | absURL }}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #e5e7eb; color: #1f2937; text-decoration: none; border-radius: 4px; margin-right: 1rem;">
+<div class="page-nav">
+    <a href="{{ "/" | absURL }}" class="page-nav__link page-nav__link--muted">
         ← Back to Home
     </a>
     {{ if .Params.topic }}
-    <a href="{{ printf "/topics/%s/" .Params.topic | absURL }}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #2563eb; color: white; text-decoration: none; border-radius: 4px;">
+    <a href="{{ printf "/topics/%s/" .Params.topic | absURL }}" class="page-nav__link page-nav__link--primary">
         View All {{ .Params.topicName }} Summaries
     </a>
     {{ end }}

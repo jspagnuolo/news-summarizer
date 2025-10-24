@@ -3,7 +3,7 @@
 {{ define "main" }}
 <div class="topics-page">
     <h1>Topics</h1>
-    <p style="text-align: center;  margin-bottom: 2rem;">
+    <p class="section-intro">
         Select a topic below to view all news summaries for that specific area of coverage.
     </p>
 
@@ -22,13 +22,13 @@
             <div class="topic-card">
                 <a href="{{ printf "/summaries/%s/" $topicId | absURL }}">
                     <h3>{{ $firstPage.Params.topicName }}</h3>
-                    <p style="color: #6b7280; margin-top: 0.5rem;">
+                    <p class="topic-count">
                         {{ len $topicPages }} summaries
                     </p>
                 </a>
             </div>
         {{ else }}
-        <p style="text-align: center; color: #6b7280; padding: 3rem; grid-column: 1 / -1;">
+        <p class="empty-state empty-state--full">
             No topics available yet. Topics will appear after the first summaries are generated.
         </p>
         {{ end }}

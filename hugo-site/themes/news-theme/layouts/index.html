@@ -19,14 +19,14 @@
         <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
     {{ else }}
-    <p style="text-align: center; color: #6b7280; padding: 3rem;">
+    <p class="empty-state">
         No summaries available yet. The first summaries will appear after the worker runs.
     </p>
     {{ end }}
 
     {{ if gt (len $pages) 10 }}
-    <div style="text-align: center; margin-top: 2rem;">
-        <a href="{{ "/archive/" | absURL }}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #2563eb; color: white; text-decoration: none; border-radius: 4px;">
+    <div class="cta-wrapper">
+        <a href="{{ "/archive/" | absURL }}" class="cta-button cta-button--primary">
             View All Summaries
         </a>
     </div>

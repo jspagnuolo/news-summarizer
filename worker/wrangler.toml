@@ -22,3 +22,10 @@ crons = ["0 4 * * *"]
 # - GITHUB_BRANCH (optional, defaults to 'main')
 #
 # Note: GITHUB_OWNER and GITHUB_REPO are set above in [vars] section
+
+[env.staging]
+name = "news-summarizer-worker-staging"
+
+[env.staging.vars]
+GITHUB_REPO = "news-summarizer"
+GITHUB_OWNER = "jspagnuolo"

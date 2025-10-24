@@ -54,6 +54,15 @@ header p {
   font-size: 1.1rem;
 }
 
+.site-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.site-title-link:hover {
+  color: var(--link-color);
+}
+
 /* Navigation */
 nav {
   background-color: var(--bg-secondary);
@@ -88,6 +97,51 @@ nav a:hover {
 /* Main Content */
 main {
   min-height: 60vh;
+}
+
+/* Utility Sections */
+.section-intro {
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 2rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6b7280;
+  padding: 3rem 1rem;
+}
+
+.empty-state--full {
+  grid-column: 1 / -1;
+}
+
+.content-intro {
+  margin-bottom: 2rem;
+}
+
+.cta-wrapper {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.cta-button--primary {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.cta-button--primary:hover {
+  background-color: #3b82f6;
+  transform: translateY(-1px);
 }
 
 /* Article Cards */
@@ -135,6 +189,12 @@ main {
 .summary-meta span {
   display: inline-flex;
   align-items: center;
+}
+
+.summary-meta-panel {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .summary-excerpt {
@@ -199,6 +259,44 @@ main {
   margin-bottom: 1.5rem;
 }
 
+.page-nav {
+  margin-top: 2rem;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-nav__link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.page-nav__link--muted {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.page-nav__link--muted:hover {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.page-nav__link--primary {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.page-nav__link--primary:hover {
+  background-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
 .summary-content a {
   color: var(--link-color);
   text-decoration: underline;
@@ -228,9 +326,9 @@ main {
   color: #fcd34d;
 }
 
+.perspective-badge.us,
 .perspective-badge.international {
-    background: #000;
-
+  background: #000;
   border-color: #60a5fa;
   color: #93c5fd;
 }
@@ -331,6 +429,11 @@ main {
   display: block;
 }
 
+.topic-count {
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
 /* Archive List */
 .archive-list {
   margin-top: 2rem;
@@ -366,6 +469,12 @@ main {
   color: #94a3b8;
   font-size: 0.9rem;
   margin-right: 1rem;
+}
+
+.archive-topic {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-left: 1rem;
 }
 
 /* Footer */
