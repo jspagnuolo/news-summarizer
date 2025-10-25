@@ -453,24 +453,42 @@ ${venezuelanText}
 UNITED STATES SOURCES (English-language, US media):
 ${usText}
 
-Provide your response in the following JSON format:
-{
-  "venezuelanPerspective": ["point 1", "point 2", ...],
-  "usPerspective": ["point 1", "point 2", ...],
-  "keyDifferences": ["difference 1", "difference 2", ...],
-  "overallHighlights": ["highlight 1", "highlight 2", ...]
-}
+Your response must be valid JSON matching the schema enforced by the system (arrays of bullet point strings for each field).
 
 Requirements:
 - Venezuelan perspective: Pull core takeaways from Venezuelan outlets (translate Spanish where helpful)
 - US perspective: Pull core takeaways from United States outlets only
-- All responses must be concise bullet points (no standalone paragraphs)
+- All responses must be provided as concise bullet points (no paragraphs). Each bullet should capture a single idea.
 - Key differences: Identify 2-4 notable differences in coverage, emphasis, or framing between the two perspectives
 - Overall highlights: Provide 3-5 bullet points that synthesize both perspectives into a single view
 - Maintain neutrality - present both perspectives fairly
 - If perspectives conflict, acknowledge this explicitly
 - If one perspective has no sources, note this and focus on available sources
 - All output must be in English (translate Spanish content as needed)`;
+
+  const summarySchema = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['venezuelanPerspective', 'usPerspective', 'keyDifferences', 'overallHighlights'],
+    properties: {
+      venezuelanPerspective: {
+        type: 'array',
+        items: { type: 'string' }
+      },
+      usPerspective: {
+        type: 'array',
+        items: { type: 'string' }
+      },
+      keyDifferences: {
+        type: 'array',
+        items: { type: 'string' }
+      },
+      overallHighlights: {
+        type: 'array',
+        items: { type: 'string' }
+      }
+    }
+  };
 
   try {
     const response = await retryWithBackoff(async () => {
@@ -486,7 +504,13 @@ Requirements:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'news_summary',
+            schema: summarySchema
+          }
+        },
         temperature: 0.3,
         max_tokens: 3000
       });
@@ -532,9 +556,16 @@ draft: false
 
   const extractPoints = value => {
     if (!value) return [];
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value.bulletPoints)) return value.bulletPoints;
-    if (typeof value === 'string' && value.trim()) return [value.trim()];
+    if (Array.isArray(value)) return value.filter(point => !!point && point.toString().trim());
+    if (Array.isArray(value.bulletPoints)) {
+      return value.bulletPoints.filter(point => !!point && point.toString().trim());
+    }
+    if (value && typeof value === 'object' && typeof value.summary === 'string') {
+      return value.summary.split(/\r?\n+/).map(item => item.trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      return value.split(/\r?\n+/).map(item => item.trim()).filter(Boolean);
+    }
     return [];
   };
 
@@ -605,7 +636,7 @@ ${articles.map((article, idx) => {
   }).join('\n')}
 `;
 
-  return frontMatter + overallSection + internationalSection + venezuelanSection + differencesSection + sourcesSection;
+  return frontMatter + overallSection + usSection + venezuelanSection + differencesSection + sourcesSection;
 }
 
 // ============================================================================
