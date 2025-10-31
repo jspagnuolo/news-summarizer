@@ -32,7 +32,7 @@ This system automatically:
 - **Per-Feed Queries**: Each RSS feed can have custom search queries
 - **Article Balancing**: Ensures minimum articles from each perspective
 - **Smart Deduplication**: Removes similar articles using Jaccard similarity
-- **Comprehensive Documentation**: Added `.claud/` context files for development
+- **Comprehensive Documentation**: Added CLAUDE.md guidelines for development
 - **Project Structure**: Added ARCHITECTURE.md, CHANGELOG.md, and improved README
 
 ### Coming Soon
@@ -45,12 +45,6 @@ This system automatically:
 
 ```
 news-summarizer/
-├── .claud/                      # Claude Code context files
-│   ├── context.md               # Project overview
-│   ├── conventions.md           # Coding standards
-│   ├── testing.md               # Test strategy
-│   ├── deployment.md            # Deployment guide
-│   └── roadmap.md               # Development roadmap
 ├── config/
 │   └── topics.json              # Topics configuration (easy to edit!)
 ├── worker/
@@ -366,7 +360,7 @@ Static Site (news.spagnuolo.biz)
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
-- **[.claud/](.claud/)** - Development context files (for AI-assisted development)
+- **[CLAUDE.md](CLAUDE.md)** - Development guidelines and best practices
 
 ## License
 
