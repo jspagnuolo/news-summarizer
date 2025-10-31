@@ -8,8 +8,8 @@
  * 4. Commit and push to GitHub
  */
 
-import OpenAI from 'openai';
-import { XMLParser } from 'fast-xml-parser';
+import OpenAI from "openai";
+import { XMLParser } from "fast-xml-parser";
 
 // ============================================================================
 // CONFIGURATION & UTILITIES
@@ -23,10 +23,10 @@ async function fetchTopicsConfig(env) {
 
   const response = await fetch(url, {
     headers: {
-      'Authorization': `token ${env.GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'News-Summarizer-Worker'
-    }
+      Authorization: `token ${env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "News-Summarizer-Worker",
+    },
   });
 
   if (!response.ok) {
@@ -42,7 +42,7 @@ async function fetchTopicsConfig(env) {
  * Formats a date as YYYY-MM-DD
  */
 function formatDate(date) {
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0];
 }
 
 /**
@@ -56,8 +56,10 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
       if (i === maxRetries - 1) throw error;
 
       const delay = baseDelay * Math.pow(2, i);
-      console.log(`Retry ${i + 1}/${maxRetries} after ${delay}ms. Error: ${error.message}`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      console.log(
+        `Retry ${i + 1}/${maxRetries} after ${delay}ms. Error: ${error.message}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -69,15 +71,25 @@ function jaccardSimilarity(str1, str2) {
   if (!str1 || !str2) return 0;
 
   // Convert to lowercase and split into word sets
-  const set1 = new Set(str1.toLowerCase().split(/\s+/).filter(word => word.length > 2));
-  const set2 = new Set(str2.toLowerCase().split(/\s+/).filter(word => word.length > 2));
+  const set1 = new Set(
+    str1
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 2),
+  );
+  const set2 = new Set(
+    str2
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 2),
+  );
 
   // Handle edge cases
   if (set1.size === 0 && set2.size === 0) return 1;
   if (set1.size === 0 || set2.size === 0) return 0;
 
   // Calculate intersection and union
-  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
   const union = new Set([...set1, ...set2]);
 
   return intersection.size / union.size;
@@ -89,12 +101,14 @@ function jaccardSimilarity(str1, str2) {
 function deduplicateArticles(articles, threshold = 0.75) {
   if (!articles || articles.length === 0) return [];
 
-  console.log(`🔍 Starting deduplication with ${articles.length} articles (threshold: ${threshold})`);
+  console.log(
+    `🔍 Starting deduplication with ${articles.length} articles (threshold: ${threshold})`,
+  );
 
   // Count articles by region to determine which sources are underrepresented
   const regionCounts = {};
-  articles.forEach(article => {
-    const region = article.metadata?.region || 'unknown';
+  articles.forEach((article) => {
+    const region = article.metadata?.region || "unknown";
     regionCounts[region] = (regionCounts[region] || 0) + 1;
   });
 
@@ -111,9 +125,9 @@ function deduplicateArticles(articles, threshold = 0.75) {
       if (similarity >= threshold) {
         isDuplicate = true;
         duplicateInfo.push({
-          kept: uniqueArticle.title.substring(0, 50) + '...',
-          duplicate: article.title.substring(0, 50) + '...',
-          similarity: similarity.toFixed(2)
+          kept: uniqueArticle.title.substring(0, 50) + "...",
+          duplicate: article.title.substring(0, 50) + "...",
+          similarity: similarity.toFixed(2),
         });
         break;
       }
@@ -125,9 +139,13 @@ function deduplicateArticles(articles, threshold = 0.75) {
   }
 
   if (duplicateInfo.length > 0) {
-    console.log(`   Removed ${duplicateInfo.length} duplicate/similar article(s)`);
-    duplicateInfo.slice(0, 3).forEach(info => {
-      console.log(`   - Similarity ${info.similarity}: Kept "${info.kept}", removed "${info.duplicate}"`);
+    console.log(
+      `   Removed ${duplicateInfo.length} duplicate/similar article(s)`,
+    );
+    duplicateInfo.slice(0, 3).forEach((info) => {
+      console.log(
+        `   - Similarity ${info.similarity}: Kept "${info.kept}", removed "${info.duplicate}"`,
+      );
     });
     if (duplicateInfo.length > 3) {
       console.log(`   - ... and ${duplicateInfo.length - 3} more`);
@@ -142,7 +160,11 @@ function deduplicateArticles(articles, threshold = 0.75) {
 /**
  * Balances article selection to ensure fair representation from different perspectives
  */
-function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspective) {
+function balanceArticleSelection(
+  articles,
+  maxArticles,
+  minArticlesPerPerspective,
+) {
   if (!articles || articles.length === 0) return [];
 
   const venezuelanArticles = [];
@@ -150,11 +172,15 @@ function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspectiv
   const otherArticles = [];
 
   for (const article of articles) {
-    const perspective = (article.metadata?.perspective || article.metadata?.feedType || '').toLowerCase();
+    const perspective = (
+      article.metadata?.perspective ||
+      article.metadata?.feedType ||
+      ""
+    ).toLowerCase();
 
-    if (perspective === 'venezuelan' || article.metadata?.region === 'VE') {
+    if (perspective === "venezuelan" || article.metadata?.region === "VE") {
       venezuelanArticles.push(article);
-    } else if (perspective === 'us' || article.metadata?.region === 'US') {
+    } else if (perspective === "us" || article.metadata?.region === "US") {
       usArticles.push(article);
     } else {
       otherArticles.push(article);
@@ -172,10 +198,14 @@ function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspectiv
   const minRequired = minArticlesPerPerspective || 0;
   if (minRequired > 0) {
     if (venezuelanArticles.length < minRequired) {
-      console.log(`   ⚠️  Only ${venezuelanArticles.length} Venezuelan articles found (minimum: ${minRequired})`);
+      console.log(
+        `   ⚠️  Only ${venezuelanArticles.length} Venezuelan articles found (minimum: ${minRequired})`,
+      );
     }
     if (usArticles.length < minRequired) {
-      console.log(`   ⚠️  Only ${usArticles.length} US articles found (minimum: ${minRequired})`);
+      console.log(
+        `   ⚠️  Only ${usArticles.length} US articles found (minimum: ${minRequired})`,
+      );
     }
   }
 
@@ -197,7 +227,10 @@ function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspectiv
     let venezIndex = 0;
     let usIndex = 0;
 
-    while (balanced.length < maxArticles && (venezIndex < extraVenezuelan.length || usIndex < extraUs.length)) {
+    while (
+      balanced.length < maxArticles &&
+      (venezIndex < extraVenezuelan.length || usIndex < extraUs.length)
+    ) {
       if (venezIndex < extraVenezuelan.length) {
         balanced.push(extraVenezuelan[venezIndex++]);
         if (balanced.length >= maxArticles) break;
@@ -217,10 +250,20 @@ function balanceArticleSelection(articles, maxArticles, minArticlesPerPerspectiv
   }
 
   // Final count
-  const finalVenezuelan = balanced.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan' || a.metadata?.region === 'VE').length;
-  const finalUs = balanced.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us' || a.metadata?.region === 'US').length;
+  const finalVenezuelan = balanced.filter(
+    (a) =>
+      (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan" ||
+      a.metadata?.region === "VE",
+  ).length;
+  const finalUs = balanced.filter(
+    (a) =>
+      (a.metadata?.perspective || a.metadata?.feedType) === "us" ||
+      a.metadata?.region === "US",
+  ).length;
 
-  console.log(`   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalUs} US (total: ${balanced.length})`);
+  console.log(
+    `   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalUs} US (total: ${balanced.length})`,
+  );
 
   return balanced;
 }
@@ -246,13 +289,13 @@ function buildGoogleNewsUrl(query, language, region) {
 async function parseRSSFeed(url, language, region, perspective) {
   const parser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_'
+    attributeNamePrefix: "@_",
   });
 
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'News-Summarizer-Worker/1.0'
-    }
+      "User-Agent": "News-Summarizer-Worker/1.0",
+    },
   });
 
   if (!response.ok) {
@@ -272,32 +315,34 @@ async function parseRSSFeed(url, language, region, perspective) {
 
   const derivedPerspective = perspective
     ? perspective.toLowerCase()
-    : (language === 'es' && region === 'VE')
-      ? 'venezuelan'
-      : region === 'US'
-        ? 'us'
-        : 'international';
+    : language === "es" && region === "VE"
+      ? "venezuelan"
+      : region === "US"
+        ? "us"
+        : "international";
 
-  return items.map(item => {
+  return items.map((item) => {
     // Extract source from title (Google News format: "Article Title - Source Name")
-    const titleParts = item.title?.split(' - ') || [];
-    const source = titleParts.length > 1 ? titleParts[titleParts.length - 1] : 'Google News';
-    const title = titleParts.length > 1 ? titleParts.slice(0, -1).join(' - ') : item.title;
+    const titleParts = item.title?.split(" - ") || [];
+    const source =
+      titleParts.length > 1 ? titleParts[titleParts.length - 1] : "Google News";
+    const title =
+      titleParts.length > 1 ? titleParts.slice(0, -1).join(" - ") : item.title;
 
     return {
-      title: title || 'Untitled',
-      url: item.link || '',
+      title: title || "Untitled",
+      url: item.link || "",
       publishedAt: item.pubDate || new Date().toISOString(),
-      description: item.description || '',
+      description: item.description || "",
       source: {
-        name: source
+        name: source,
       },
       metadata: {
         language: language,
         region: region,
         feedType: derivedPerspective,
-        perspective: derivedPerspective
-      }
+        perspective: derivedPerspective,
+      },
     };
   });
 }
@@ -310,7 +355,7 @@ async function fetchNewsForTopic(topic, settings) {
 
   const feedArticles = {}; // Track articles per feed
   const maxArticles = settings.maxArticlesPerTopic || 10;
-  const maxAgeDays = parseInt(settings.articleMaxAge || '7d');
+  const maxAgeDays = parseInt(settings.articleMaxAge || "7d");
   const minArticlesPerFeed = settings.minArticlesPerFeed;
   const deduplicationThreshold = settings.deduplicationSimilarityThreshold;
 
@@ -320,28 +365,37 @@ async function fetchNewsForTopic(topic, settings) {
   try {
     // Fetch from each RSS feed configured for the topic
     for (const feed of topic.rssFeeds || []) {
-      if (feed.type !== 'google_news') continue;
+      if (feed.type !== "google_news") continue;
 
       try {
         // Use per-feed query if available, otherwise fall back to topic query (backward compatibility)
         const query = feed.query || topic.query;
 
         if (!query) {
-          console.log(`   ⚠️  No query specified for ${feed.language}-${feed.region} feed, skipping`);
+          console.log(
+            `   ⚠️  No query specified for ${feed.language}-${feed.region} feed, skipping`,
+          );
           continue;
         }
 
         const url = buildGoogleNewsUrl(query, feed.language, feed.region);
 
         console.log(`\n   📡 Fetching ${feed.language}-${feed.region} feed...`);
-        console.log(`   Query: "${query.substring(0, 80)}${query.length > 80 ? '...' : ''}"`);
+        console.log(
+          `   Query: "${query.substring(0, 80)}${query.length > 80 ? "..." : ""}"`,
+        );
 
         const articles = await retryWithBackoff(async () => {
-          return await parseRSSFeed(url, feed.language, feed.region, feed.perspective);
+          return await parseRSSFeed(
+            url,
+            feed.language,
+            feed.region,
+            feed.perspective,
+          );
         });
 
         // Filter by date
-        const recentArticles = articles.filter(article => {
+        const recentArticles = articles.filter((article) => {
           const pubDate = new Date(article.publishedAt);
           return pubDate >= cutoffDate;
         });
@@ -350,9 +404,10 @@ async function fetchNewsForTopic(topic, settings) {
         feedArticles[feedKey] = recentArticles;
 
         console.log(`   ✅ Found: ${recentArticles.length} articles`);
-
       } catch (error) {
-        console.error(`   ❌ Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`);
+        console.error(
+          `   ❌ Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`,
+        );
         // Continue with other feeds
       }
     }
@@ -369,7 +424,7 @@ async function fetchNewsForTopic(topic, settings) {
 
     // Remove duplicates by URL first
     const uniqueByUrl = Array.from(
-      new Map(allArticles.map(a => [a.url, a])).values()
+      new Map(allArticles.map((a) => [a.url, a])).values(),
     );
 
     console.log(`   After URL deduplication: ${uniqueByUrl.length}`);
@@ -381,22 +436,32 @@ async function fetchNewsForTopic(topic, settings) {
     }
 
     // Sort by date (newest first)
-    const sorted = deduplicated.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+    const sorted = deduplicated.sort(
+      (a, b) => new Date(b.publishedAt) - new Date(a.publishedAt),
+    );
 
     // Balance articles if minArticlesPerFeed is set
     let finalArticles;
     if (minArticlesPerFeed && minArticlesPerFeed > 0) {
-      finalArticles = balanceArticleSelection(sorted, maxArticles, minArticlesPerFeed);
+      finalArticles = balanceArticleSelection(
+        sorted,
+        maxArticles,
+        minArticlesPerFeed,
+      );
     } else {
       // Just take the top maxArticles
       finalArticles = sorted.slice(0, maxArticles);
-      console.log(`\n   ✅ Selected top ${finalArticles.length} articles (no balancing)`);
+      console.log(
+        `\n   ✅ Selected top ${finalArticles.length} articles (no balancing)`,
+      );
     }
 
     return finalArticles;
-
   } catch (error) {
-    console.error(`\n   ❌ Error fetching news for ${topic.name}:`, error.message);
+    console.error(
+      `\n   ❌ Error fetching news for ${topic.name}:`,
+      error.message,
+    );
     throw error;
   }
 }
@@ -412,38 +477,55 @@ async function summarizeArticles(articles, topic, openai) {
   console.log(`Summarizing ${articles.length} articles for ${topic.name}`);
 
   // Separate articles by perspective
-  const venezuelanArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan');
-  const usArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us');
-  const fallbackArticles = articles.filter(a => !['venezuelan', 'us'].includes((a.metadata?.perspective || a.metadata?.feedType)));
+  const venezuelanArticles = articles.filter(
+    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan",
+  );
+  const usArticles = articles.filter(
+    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "us",
+  );
+  const fallbackArticles = articles.filter(
+    (a) =>
+      !["venezuelan", "us"].includes(
+        a.metadata?.perspective || a.metadata?.feedType,
+      ),
+  );
 
-  console.log(`Venezuelan sources: ${venezuelanArticles.length}, US sources: ${usArticles.length}`);
+  console.log(
+    `Venezuelan sources: ${venezuelanArticles.length}, US sources: ${usArticles.length}`,
+  );
   if (fallbackArticles.length > 0) {
     console.log(`Other sources detected: ${fallbackArticles.length}`);
   }
 
   // Format Venezuelan articles
-  const venezuelanText = venezuelanArticles.length > 0
-    ? venezuelanArticles.map((article, idx) => {
-        return `Article ${idx + 1}:
+  const venezuelanText =
+    venezuelanArticles.length > 0
+      ? venezuelanArticles
+          .map((article, idx) => {
+            return `Article ${idx + 1}:
 Title: ${article.title}
 Source: ${article.source.name}
 Published: ${article.publishedAt}
-Description: ${article.description || 'N/A'}
+Description: ${article.description || "N/A"}
 ---`;
-      }).join('\n\n')
-    : 'No Venezuelan sources available';
+          })
+          .join("\n\n")
+      : "No Venezuelan sources available";
 
   // Format US articles
-  const usText = usArticles.length > 0
-    ? usArticles.map((article, idx) => {
-        return `Article ${idx + 1}:
+  const usText =
+    usArticles.length > 0
+      ? usArticles
+          .map((article, idx) => {
+            return `Article ${idx + 1}:
 Title: ${article.title}
 Source: ${article.source.name}
 Published: ${article.publishedAt}
-Description: ${article.description || 'N/A'}
+Description: ${article.description || "N/A"}
 ---`;
-      }).join('\n\n')
-    : 'No United States sources available';
+          })
+          .join("\n\n")
+      : "No United States sources available";
 
   const prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from two regional perspectives.
 
@@ -458,61 +540,58 @@ Your response must be valid JSON matching the schema enforced by the system (arr
 Requirements:
 - Venezuelan perspective: Pull core takeaways from Venezuelan outlets (translate Spanish where helpful)
 - US perspective: Pull core takeaways from United States outlets only
-- All responses must be provided as concise bullet points (no paragraphs). Each bullet should capture a single idea.
-- Key differences: Identify 2-4 notable differences in coverage, emphasis, or framing between the two perspectives
+- All responses must be provided ONLY as concise bullet points. Each bullet should capture a single idea.
 - Overall highlights: Provide 3-5 bullet points that synthesize both perspectives into a single view
 - Maintain neutrality - present both perspectives fairly
-- If perspectives conflict, acknowledge this explicitly
+- If perspectives conflict, acknowledge this explicitly in the relevant bullet points
 - If one perspective has no sources, note this and focus on available sources
-- All output must be in English (translate Spanish content as needed)`;
+- All output must be in English (translate Spanish content as needed)
+- DO NOT include any paragraph summaries or narrative text - only bullet points`;
 
   const summarySchema = {
-    type: 'object',
+    type: "object",
     additionalProperties: false,
-    required: ['venezuelanPerspective', 'usPerspective', 'keyDifferences', 'overallHighlights'],
+    required: ["venezuelanPerspective", "usPerspective", "overallHighlights"],
     properties: {
       venezuelanPerspective: {
-        type: 'array',
-        items: { type: 'string' }
+        type: "array",
+        items: { type: "string" },
       },
       usPerspective: {
-        type: 'array',
-        items: { type: 'string' }
-      },
-      keyDifferences: {
-        type: 'array',
-        items: { type: 'string' }
+        type: "array",
+        items: { type: "string" },
       },
       overallHighlights: {
-        type: 'array',
-        items: { type: 'string' }
-      }
-    }
+        type: "array",
+        items: { type: "string" },
+      },
+    },
   };
 
   try {
     const response = await retryWithBackoff(async () => {
       return await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
           {
-            role: 'system',
-            content: 'You are a professional news analyst who creates concise, accurate summaries comparing different regional perspectives on current events.'
+            role: "system",
+            content:
+              "You are a professional news analyst who creates concise, accurate summaries comparing different regional perspectives on current events.",
           },
           {
-            role: 'user',
-            content: prompt
-          }
+            role: "user",
+            content: prompt,
+          },
         ],
         response_format: {
-          type: 'json_schema',
+          type: "json_schema",
           json_schema: {
-            name: 'news_summary',
-            schema: summarySchema
-          }
+            name: "news_summary",
+            schema: summarySchema,
+          },
         },
         temperature: 0.3,
-        max_tokens: 3000
+        max_tokens: 3000,
       });
     });
 
@@ -520,7 +599,10 @@ Requirements:
     console.log(`Successfully summarized articles for ${topic.name}`);
     return summary;
   } catch (error) {
-    console.error(`Error summarizing articles for ${topic.name}:`, error.message);
+    console.error(
+      `Error summarizing articles for ${topic.name}:`,
+      error.message,
+    );
     throw error;
   }
 }
@@ -533,19 +615,23 @@ Requirements:
  * Generates a Hugo markdown file from the perspective-based summary
  */
 function generateHugoMarkdown(topic, articles, summary, date) {
-  const sources = [...new Set(articles.map(a => a.source.name))];
+  const sources = [...new Set(articles.map((a) => a.source.name))];
   const dateStr = formatDate(date);
 
   // Count articles by perspective
-  const venezuelanArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'venezuelan');
-  const usArticles = articles.filter(a => (a.metadata?.perspective || a.metadata?.feedType) === 'us');
+  const venezuelanArticles = articles.filter(
+    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan",
+  );
+  const usArticles = articles.filter(
+    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "us",
+  );
 
   const frontMatter = `---
 title: "${topic.name} News - ${dateStr}"
 date: ${date.toISOString()}
 topic: ${topic.id}
 topicName: "${topic.name}"
-sources: [${sources.map(s => `"${s}"`).join(', ')}]
+sources: [${sources.map((s) => `"${s}"`).join(", ")}]
 articleCount: ${articles.length}
 venezuelanSources: ${venezuelanArticles.length}
 usSources: ${usArticles.length}
@@ -554,17 +640,30 @@ draft: false
 
 `;
 
-  const extractPoints = value => {
+  const extractPoints = (value) => {
     if (!value) return [];
-    if (Array.isArray(value)) return value.filter(point => !!point && point.toString().trim());
+    if (Array.isArray(value))
+      return value.filter((point) => !!point && point.toString().trim());
     if (Array.isArray(value.bulletPoints)) {
-      return value.bulletPoints.filter(point => !!point && point.toString().trim());
+      return value.bulletPoints.filter(
+        (point) => !!point && point.toString().trim(),
+      );
     }
-    if (value && typeof value === 'object' && typeof value.summary === 'string') {
-      return value.summary.split(/\r?\n+/).map(item => item.trim()).filter(Boolean);
+    if (
+      value &&
+      typeof value === "object" &&
+      typeof value.summary === "string"
+    ) {
+      return value.summary
+        .split(/\r?\n+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
     }
-    if (typeof value === 'string') {
-      return value.split(/\r?\n+/).map(item => item.trim()).filter(Boolean);
+    if (typeof value === "string") {
+      return value
+        .split(/\r?\n+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
     }
     return [];
   };
@@ -573,70 +672,74 @@ draft: false
     if (!points || points.length === 0) {
       return fallback;
     }
-    return points.map(point => `- ${point}`).join('\n');
+    return points.map((point) => `- ${point}`).join("\n");
   };
 
   const venezuelanPoints = extractPoints(summary.venezuelanPerspective);
-  const usPoints = extractPoints(summary.usPerspective || summary.internationalPerspective);
-  const keyDifferences = extractPoints(summary.keyDifferences);
-  const overallHighlights = extractPoints(summary.overallHighlights || summary.overallSummary);
+  const usPoints = extractPoints(
+    summary.usPerspective || summary.internationalPerspective,
+  );
+  const overallHighlights = extractPoints(
+    summary.overallHighlights || summary.overallSummary,
+  );
 
   // Overall Highlights Section (FIRST)
   const overallSection = `## Overall Highlights
 
-${formatBulletList(overallHighlights, '- Unable to generate combined highlights.')}
+${formatBulletList(overallHighlights, "- Unable to generate combined highlights.")}
 
 `;
 
   // US Perspective Section (SECOND)
-  const usSection = usArticles.length > 0
-    ? `## US Perspective (US Sources)
+  const usSection =
+    usArticles.length > 0
+      ? `## US Perspective (US Sources)
 
-${formatBulletList(usPoints, '- No takeaways available for US sources.')}
+${formatBulletList(usPoints, "- No takeaways available for US sources.")}
 
 `
-    : `## US Perspective (US Sources)
+      : `## US Perspective (US Sources)
 
 - No United States sources available for this time period.
 
 `;
 
   // Venezuelan Perspective Section (THIRD)
-  const venezuelanSection = venezuelanArticles.length > 0
-    ? `## Inside Venezuela (Venezuelan Sources)
+  const venezuelanSection =
+    venezuelanArticles.length > 0
+      ? `## Inside Venezuela (Venezuelan Sources)
 
-${formatBulletList(venezuelanPoints, '- No takeaways available for Venezuelan sources.')}
+${formatBulletList(venezuelanPoints, "- No takeaways available for Venezuelan sources.")}
 
 `
-    : `## Inside Venezuela (Venezuelan Sources)
+      : `## Inside Venezuela (Venezuelan Sources)
 
 - No Venezuelan sources available for this time period.
 
 `;
 
-  // Key Differences Section (FOURTH)
-  const differencesSection = keyDifferences.length > 0
-    ? `## Key Differences in Coverage
-
-${formatBulletList(keyDifferences, '- Perspectives aligned with no notable differences.')}
-
-`
-    : '';
-
   // Sources Section with language/region tags (LAST)
   const sourcesSection = `## Sources
 
-This summary is based on ${articles.length} article${articles.length !== 1 ? 's' : ''} from the following sources:
+This summary is based on ${articles.length} article${articles.length !== 1 ? "s" : ""} from the following sources:
 
-${articles.map((article, idx) => {
-    const lang = article.metadata?.language || 'unknown';
-    const region = article.metadata?.region || 'unknown';
+${articles
+  .map((article, idx) => {
+    const lang = article.metadata?.language || "unknown";
+    const region = article.metadata?.region || "unknown";
     const tag = `[${lang}-${region}]`;
     return `${idx + 1}. ${tag} [${article.title}](${article.url}) - ${article.source.name} (${new Date(article.publishedAt).toLocaleDateString()})`;
-  }).join('\n')}
+  })
+  .join("\n")}
 `;
 
-  return frontMatter + overallSection + usSection + venezuelanSection + differencesSection + sourcesSection;
+  return (
+    frontMatter +
+    overallSection +
+    usSection +
+    venezuelanSection +
+    sourcesSection
+  );
 }
 
 // ============================================================================
@@ -652,10 +755,10 @@ async function getFileSHA(path, env) {
   try {
     const response = await fetch(url, {
       headers: {
-        'Authorization': `token ${env.GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'News-Summarizer-Worker'
-      }
+        Authorization: `token ${env.GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "News-Summarizer-Worker",
+      },
     });
 
     if (response.ok) {
@@ -682,7 +785,7 @@ async function commitToGitHub(path, content, message, env) {
   const body = {
     message: message,
     content: btoa(unescape(encodeURIComponent(content))),
-    branch: env.GITHUB_BRANCH || 'main'
+    branch: env.GITHUB_BRANCH || "main",
   };
 
   if (existingSha) {
@@ -690,19 +793,21 @@ async function commitToGitHub(path, content, message, env) {
   }
 
   const response = await fetch(url, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Authorization': `token ${env.GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'News-Summarizer-Worker',
-      'Content-Type': 'application/json'
+      Authorization: `token ${env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "News-Summarizer-Worker",
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to commit file: ${response.statusText} - ${errorText}`);
+    throw new Error(
+      `Failed to commit file: ${response.statusText} - ${errorText}`,
+    );
   }
 
   console.log(`Successfully committed: ${path}`);
@@ -717,11 +822,13 @@ async function commitToGitHub(path, content, message, env) {
  * Purges Cloudflare cache for news.spagnuolo.biz only
  */
 async function purgeCloudflareCache(env) {
-  console.log('Purging Cloudflare cache for news.spagnuolo.biz...');
+  console.log("Purging Cloudflare cache for news.spagnuolo.biz...");
 
   // If CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN are not set, skip cache purge
   if (!env.CLOUDFLARE_ZONE_ID || !env.CLOUDFLARE_API_TOKEN) {
-    console.log('⚠️  Cache purge skipped - CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not configured');
+    console.log(
+      "⚠️  Cache purge skipped - CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not configured",
+    );
     return { success: false, skipped: true };
   }
 
@@ -729,14 +836,14 @@ async function purgeCloudflareCache(env) {
     const url = `https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE_ID}/purge_cache`;
 
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        prefixes: ['news.spagnuolo.biz/']
-      })
+        prefixes: ["news.spagnuolo.biz/"],
+      }),
     });
 
     if (!response.ok) {
@@ -745,9 +852,10 @@ async function purgeCloudflareCache(env) {
     }
 
     const result = await response.json();
-    console.log('✓ Successfully purged Cloudflare cache for news.spagnuolo.biz');
+    console.log(
+      "✓ Successfully purged Cloudflare cache for news.spagnuolo.biz",
+    );
     return { success: true, result };
-
   } catch (error) {
     console.error(`✗ Failed to purge cache: ${error.message}`);
     return { success: false, error: error.message };
@@ -768,10 +876,7 @@ async function processTopic(topic, openai, env, date) {
 
   try {
     // Step 1: Fetch news articles
-    const articles = await fetchNewsForTopic(
-      topic,
-      env.topicsConfig.settings
-    );
+    const articles = await fetchNewsForTopic(topic, env.topicsConfig.settings);
 
     if (articles.length === 0) {
       console.log(`No articles found for ${topic.name}. Skipping.`);
@@ -793,7 +898,6 @@ async function processTopic(topic, openai, env, date) {
 
     console.log(`✓ Successfully processed ${topic.name}`);
     return { success: true, topic: topic.name, articlesCount: articles.length };
-
   } catch (error) {
     console.error(`✗ Failed to process ${topic.name}:`, error.message);
     return { success: false, topic: topic.name, error: error.message };
@@ -804,31 +908,31 @@ async function processTopic(topic, openai, env, date) {
  * Main cron handler
  */
 async function handleScheduled(event, env) {
-  console.log('========================================');
-  console.log('News Summarizer Worker - Starting');
+  console.log("========================================");
+  console.log("News Summarizer Worker - Starting");
   console.log(`Time: ${new Date().toISOString()}`);
-  console.log('========================================\n');
+  console.log("========================================\n");
 
   const results = {
     timestamp: new Date().toISOString(),
     topics: [],
     success: 0,
     failed: 0,
-    skipped: 0
+    skipped: 0,
   };
 
   try {
     // Initialize APIs
     const openai = new OpenAI({
-      apiKey: env.OPENAI_API_KEY
+      apiKey: env.OPENAI_API_KEY,
     });
 
     // Fetch topics configuration
-    console.log('Fetching topics configuration...');
+    console.log("Fetching topics configuration...");
     const topicsConfig = await fetchTopicsConfig(env);
     env.topicsConfig = topicsConfig; // Store for later use
 
-    const activeTopics = topicsConfig.topics.filter(t => t.active);
+    const activeTopics = topicsConfig.topics.filter((t) => t.active);
     console.log(`Found ${activeTopics.length} active topics to process\n`);
 
     // Process each topic
@@ -848,27 +952,26 @@ async function handleScheduled(event, env) {
       }
 
       // Add a small delay between topics to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
-    console.log('\n========================================');
-    console.log('News Summarizer Worker - Complete');
+    console.log("\n========================================");
+    console.log("News Summarizer Worker - Complete");
     console.log(`Successful: ${results.success}`);
     console.log(`Skipped: ${results.skipped}`);
     console.log(`Failed: ${results.failed}`);
-    console.log('========================================');
+    console.log("========================================");
 
     // Purge Cloudflare cache if any summaries were successfully created
     if (results.success > 0) {
-      console.log('\n');
+      console.log("\n");
       const cacheResult = await purgeCloudflareCache(env);
       results.cachePurge = cacheResult;
     }
 
     return results;
-
   } catch (error) {
-    console.error('Critical error in scheduled handler:', error);
+    console.error("Critical error in scheduled handler:", error);
     throw error;
   }
 }
@@ -889,16 +992,22 @@ export default {
    * HTTP handler (for manual testing)
    */
   async fetch(request, env, ctx) {
-    if (request.method === 'POST' && new URL(request.url).pathname === '/trigger') {
+    if (
+      request.method === "POST" &&
+      new URL(request.url).pathname === "/trigger"
+    ) {
       // Allow manual triggering via POST request for testing
       const results = await handleScheduled({}, env);
       return new Response(JSON.stringify(results, null, 2), {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    return new Response('News Summarizer Worker is running. Use cron trigger or POST to /trigger for manual execution.', {
-      status: 200
-    });
-  }
+    return new Response(
+      "News Summarizer Worker is running. Use cron trigger or POST to /trigger for manual execution.",
+      {
+        status: 200,
+      },
+    );
+  },
 };
