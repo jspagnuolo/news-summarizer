@@ -10,6 +10,7 @@
     </div>
     {{ end }}
 
+    {{ $currentSection := .Section }}
     {{ range .Pages }}
     <article class="summary-card">
         <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
@@ -21,10 +22,11 @@
         <div class="summary-excerpt">
             {{ .Summary }}
         </div>
+        <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
     {{ else }}
     <p class="empty-state">
-        No summaries available yet.
+        No summaries available yet for this topic.
     </p>
     {{ end }}
 </div>
