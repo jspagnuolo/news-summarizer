@@ -781,9 +781,14 @@ async function commitToGitHub(path, content, message, env) {
   // Check if file exists and get its SHA
   const existingSha = await getFileSHA(path, env);
 
+  // Properly encode UTF-8 content to base64
+  const encoder = new TextEncoder();
+  const utf8Bytes = encoder.encode(content);
+  const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
   const body = {
     message: message,
-    content: btoa(unescape(encodeURIComponent(content))),
+    content: base64Content,
     branch: env.GITHUB_BRANCH || "main",
   };
 
