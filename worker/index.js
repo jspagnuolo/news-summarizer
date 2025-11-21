@@ -707,6 +707,8 @@ ${dynamicFrontmatter}draft: false
 
 ${formatBulletList(overallHighlights, "- Unable to generate combined highlights.")}
 
+<!--more-->
+
 `;
 
   // Perspective Sections
