@@ -164,7 +164,11 @@ describe('News Summarizer Worker', () => {
             const markdown = generateHugoMarkdown(topic, articles, summary, date);
 
             expect(markdown).toContain('title: "Test Topic News - 2023-01-01"');
-            expect(markdown).toContain('perspectives: [{"id":"p1","name":"P1","icon":"🔴","count":1},{"id":"p2","name":"P2","icon":"🔵","count":1}]');
+            expect(markdown).toContain('perspectives:');
+            expect(markdown).toContain('- id: "p1"');
+            expect(markdown).toContain('name: "P1"');
+            expect(markdown).toContain('icon: "🔴"');
+            expect(markdown).toContain('count: 1');
             expect(markdown).toContain('## P1 Perspective (P1 Sources)');
             expect(markdown).toContain('- P1-1');
             expect(markdown).toContain('## P2 Perspective (P2 Sources)');

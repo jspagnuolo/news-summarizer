@@ -635,13 +635,13 @@ function generateHugoMarkdown(topic, articles, summary, date) {
     if (p) buckets[p.id].push(a);
   });
 
-  // Build perspectives metadata for frontmatter
-  const perspectivesMeta = perspectives.map(p => ({
-    id: p.id,
-    name: p.name,
-    icon: p.icon,
-    count: buckets[p.id].length
-  }));
+  // Build perspectives metadata for frontmatter (YAML-safe format)
+  const perspectivesYaml = perspectives.map(p => {
+    // Escape quotes in names and icons
+    const safeName = p.name.replace(/"/g, '\\"');
+    const safeIcon = p.icon.replace(/"/g, '\\"');
+    return `  - id: "${p.id}"\n    name: "${safeName}"\n    icon: "${safeIcon}"\n    count: ${buckets[p.id].length}`;
+  }).join('\n');
 
   // Dynamic frontmatter fields for backward compatibility or convenience
   let dynamicFrontmatter = "";
@@ -656,7 +656,8 @@ topic: ${topic.id}
 topicName: "${topic.name}"
 sources: [${sources.map((s) => `"${s}"`).join(", ")}]
 articleCount: ${articles.length}
-perspectives: ${JSON.stringify(perspectivesMeta)}
+perspectives:
+${perspectivesYaml}
 ${dynamicFrontmatter}draft: false
 ---
 
