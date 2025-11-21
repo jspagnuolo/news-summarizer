@@ -42,7 +42,7 @@ header {
   margin-bottom: 2rem;
 }
 
- h1 {
+h1 {
   font-size: 2.5rem;
   color: var(--primary-color);
   margin-bottom: 1rem;
@@ -164,13 +164,12 @@ main {
   color: var(--primary-color);
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
-  line-height: 1;
+  line-height: 1.3;
 }
 
 .summary-card h2 a {
   color: var(--link-color);
-  text-decoration: underline;
-
+  text-decoration: none;
 }
 
 .summary-card h2 a:hover {
@@ -225,11 +224,14 @@ main {
 
 /* Single Summary Page */
 .summary-content h2 {
-  color: var(--primary-color);
-  margin-top: 2rem;
+  color: #fff;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  margin-top: 2.5rem;
   margin-bottom: 1rem;
   font-size: 1.8rem;
-  line-height: 1;
+  line-height: 1.3;
 }
 
 .summary-content h3 {
@@ -321,7 +323,7 @@ main {
 }
 
 .perspective-badge.venezuelan {
-   background: #000;
+  background: #000;
   border-color: #fbbf24;
   color: #fcd34d;
 }
@@ -363,31 +365,13 @@ main {
   color: #86efac;
 }
 
-/* Perspective Sections Styling */
-.summary-content h2:has(+ h3) {
-  background: linear-gradient(90deg, var(--primary-color) 0%, #3b82f6 100%);
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.summary-content h2:nth-of-type(1) {
-  background:linear-gradient(90deg, #413bf6 0%, #2563eb 100%);
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-}
-
+/* Perspective Sections - Different colors for each section */
 .summary-content h2:nth-of-type(2) {
-  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
 .summary-content h2:nth-of-type(3) {
-  background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(90deg, #ec4899 0%, #db2777 100%);
 }
 
 /* Sources Section Styling */
@@ -550,6 +534,7 @@ footer {
 @media (max-width: 768px) {
   body {
     padding: 10px;
+    font-size: 17px;
   }
 
   header h1 {
