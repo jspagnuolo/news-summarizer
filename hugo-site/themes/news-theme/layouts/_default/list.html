@@ -20,7 +20,7 @@
             <span>📰 {{ .Params.articleCount }} articles</span>
         </div>
         <div class="summary-excerpt">
-            {{ .Summary }}
+            {{ partial "overall-highlights.html" . }}
         </div>
         <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>

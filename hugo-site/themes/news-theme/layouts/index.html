@@ -14,7 +14,7 @@
             <span>📰 {{ .Params.articleCount }} articles</span>
         </div>
         <div class="summary-excerpt">
-            {{ .Summary }}
+            {{ partial "overall-highlights.html" . }}
         </div>
         <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
@@ -26,7 +26,7 @@
 
     {{ if gt (len $pages) 10 }}
     <div class="cta-wrapper">
-        <a href="{{ "/archive/" | absURL }}" class="cta-button cta-button--primary">
+        <a href="{{ " /archive/" | absURL }}" class="cta-button cta-button--primary">
             View All Summaries
         </a>
     </div>

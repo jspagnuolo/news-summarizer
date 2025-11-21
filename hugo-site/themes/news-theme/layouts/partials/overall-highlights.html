@@ -1,0 +1,32 @@
+{{/* Extract only the Overall Highlights section from the content */}}
+{{ $content := .Content }}
+{{ $overallStart := "## Overall Highlights" }}
+{{ $nextSection := "##" }}
+
+{{/* Find the start of Overall Highlights */}}
+{{ if in $content $overallStart }}
+{{ $parts := split $content $overallStart }}
+{{ if gt (len $parts) 1 }}
+{{/* Get everything after "## Overall Highlights" */}}
+{{ $afterStart := index $parts 1 }}
+
+{{/* Find the next ## heading to know where to stop */}}
+{{ $lines := split $afterStart "\n" }}
+{{ $highlights := slice }}
+{{ range $lines }}
+{{ if and (hasPrefix . "## ") (ne . $overallStart) }}
+{{/* Stop when we hit the next section */}}
+{{ break }}
+{{ else }}
+{{ $highlights = $highlights | append . }}
+{{ end }}
+{{ end }}
+
+{{/* Join the lines and render as markdown */}}
+{{ $highlightsText := delimit $highlights "\n" }}
+{{ $highlightsText | markdownify }}
+{{ end }}
+{{ else }}
+{{/* Fallback to regular summary if no Overall Highlights section */}}
+{{ .Summary }}
+{{ end }}
