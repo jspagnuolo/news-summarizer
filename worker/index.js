@@ -164,84 +164,84 @@ function balanceArticleSelection(
   articles,
   maxArticles,
   minArticlesPerPerspective,
+  topic
 ) {
   if (!articles || articles.length === 0) return [];
 
-  const venezuelanArticles = [];
-  const usArticles = [];
+  // If no topic or perspectives defined, return simple slice
+  if (!topic || !topic.perspectives) {
+    return articles.slice(0, maxArticles);
+  }
+
+  const perspectives = topic.perspectives;
+  const buckets = {};
+  perspectives.forEach(p => buckets[p.id] = []);
   const otherArticles = [];
 
+  // Sort articles into buckets
   for (const article of articles) {
-    const perspective = (
-      article.metadata?.perspective ||
-      article.metadata?.feedType ||
-      ""
-    ).toLowerCase();
+    const pId = article.metadata?.perspective || article.metadata?.feedType;
+    const perspective = perspectives.find(p => p.id === pId);
 
-    if (perspective === "venezuelan" || article.metadata?.region === "VE") {
-      venezuelanArticles.push(article);
-    } else if (perspective === "us" || article.metadata?.region === "US") {
-      usArticles.push(article);
+    if (perspective) {
+      buckets[perspective.id].push(article);
     } else {
       otherArticles.push(article);
     }
   }
 
   console.log(`\n⚖️  Balancing article selection:`);
-  console.log(`   Venezuelan articles: ${venezuelanArticles.length}`);
-  console.log(`   US articles: ${usArticles.length}`);
+  perspectives.forEach(p => {
+    console.log(`   ${p.name} articles: ${buckets[p.id].length}`);
+  });
   if (otherArticles.length > 0) {
     console.log(`   Other articles: ${otherArticles.length}`);
   }
 
-  // Check if minimum requirements are met
+  // Check minimum requirements
   const minRequired = minArticlesPerPerspective || 0;
   if (minRequired > 0) {
-    if (venezuelanArticles.length < minRequired) {
-      console.log(
-        `   ⚠️  Only ${venezuelanArticles.length} Venezuelan articles found (minimum: ${minRequired})`,
-      );
-    }
-    if (usArticles.length < minRequired) {
-      console.log(
-        `   ⚠️  Only ${usArticles.length} US articles found (minimum: ${minRequired})`,
-      );
-    }
+    perspectives.forEach(p => {
+      if (buckets[p.id].length < minRequired) {
+        console.log(
+          `   ⚠️  Only ${buckets[p.id].length} ${p.name} articles found (minimum: ${minRequired})`
+        );
+      }
+    });
   }
 
   // Balance the selection
-  const targetPerSource = Math.floor(maxArticles / 2);
+  // Target per perspective
+  const targetPerPerspective = Math.floor(maxArticles / perspectives.length);
+  let balanced = [];
 
-  // Take up to target from each source
-  const selectedVenezuelan = venezuelanArticles.slice(0, targetPerSource);
-  const selectedUs = usArticles.slice(0, targetPerSource);
+  // 1. Take up to target from each perspective
+  perspectives.forEach(p => {
+    const selected = buckets[p.id].slice(0, targetPerPerspective);
+    balanced.push(...selected);
+  });
 
-  // Combine and check if we have room for more
-  let balanced = [...selectedVenezuelan, ...selectedUs];
-
-  // If we haven't reached maxArticles, add more from whichever source has extras
+  // 2. If we have room, fill round-robin from perspectives that have extras
   if (balanced.length < maxArticles) {
-    const extraVenezuelan = venezuelanArticles.slice(targetPerSource);
-    const extraUs = usArticles.slice(targetPerSource);
+    const extras = {};
+    perspectives.forEach(p => {
+      extras[p.id] = buckets[p.id].slice(targetPerPerspective);
+    });
 
-    let venezIndex = 0;
-    let usIndex = 0;
-
-    while (
-      balanced.length < maxArticles &&
-      (venezIndex < extraVenezuelan.length || usIndex < extraUs.length)
-    ) {
-      if (venezIndex < extraVenezuelan.length) {
-        balanced.push(extraVenezuelan[venezIndex++]);
+    let added = true;
+    while (balanced.length < maxArticles && added) {
+      added = false;
+      for (const p of perspectives) {
         if (balanced.length >= maxArticles) break;
-      }
-
-      if (usIndex < extraUs.length) {
-        balanced.push(extraUs[usIndex++]);
+        if (extras[p.id].length > 0) {
+          balanced.push(extras[p.id].shift());
+          added = true;
+        }
       }
     }
   }
 
+  // 3. If still have room, add others
   if (balanced.length < maxArticles && otherArticles.length > 0) {
     for (const article of otherArticles) {
       balanced.push(article);
@@ -249,21 +249,17 @@ function balanceArticleSelection(
     }
   }
 
-  // Final count
-  const finalVenezuelan = balanced.filter(
-    (a) =>
-      (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan" ||
-      a.metadata?.region === "VE",
-  ).length;
-  const finalUs = balanced.filter(
-    (a) =>
-      (a.metadata?.perspective || a.metadata?.feedType) === "us" ||
-      a.metadata?.region === "US",
-  ).length;
+  // Final count log
+  const finalCounts = {};
+  perspectives.forEach(p => finalCounts[p.id] = 0);
 
-  console.log(
-    `   ✅ Final balance: ${finalVenezuelan} Venezuelan, ${finalUs} US (total: ${balanced.length})`,
-  );
+  balanced.forEach(a => {
+    const pId = a.metadata?.perspective || a.metadata?.feedType;
+    if (finalCounts[pId] !== undefined) finalCounts[pId]++;
+  });
+
+  const countStr = perspectives.map(p => `${finalCounts[p.id]} ${p.name}`).join(", ");
+  console.log(`   ✅ Final balance: ${countStr} (total: ${balanced.length})`);
 
   return balanced;
 }
@@ -447,6 +443,7 @@ async function fetchNewsForTopic(topic, settings) {
         sorted,
         maxArticles,
         minArticlesPerFeed,
+        topic
       );
     } else {
       // Just take the top maxArticles
@@ -476,96 +473,105 @@ async function fetchNewsForTopic(topic, settings) {
 async function summarizeArticles(articles, topic, openai) {
   console.log(`Summarizing ${articles.length} articles for ${topic.name}`);
 
-  // Separate articles by perspective
-  const venezuelanArticles = articles.filter(
-    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan",
-  );
-  const usArticles = articles.filter(
-    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "us",
-  );
-  const fallbackArticles = articles.filter(
-    (a) =>
-      !["venezuelan", "us"].includes(
-        a.metadata?.perspective || a.metadata?.feedType,
-      ),
-  );
+  if (!topic.perspectives) {
+    // Fallback for legacy topics (though we migrated them)
+    console.warn(`Topic ${topic.name} has no perspectives defined!`);
+    return null;
+  }
 
-  console.log(
-    `Venezuelan sources: ${venezuelanArticles.length}, US sources: ${usArticles.length}`,
-  );
+  const perspectives = topic.perspectives;
+  const buckets = {};
+  perspectives.forEach(p => buckets[p.id] = []);
+  const fallbackArticles = [];
+
+  // Sort articles
+  for (const article of articles) {
+    const pId = article.metadata?.perspective || article.metadata?.feedType;
+    const perspective = perspectives.find(p => p.id === pId);
+    if (perspective) {
+      buckets[perspective.id].push(article);
+    } else {
+      fallbackArticles.push(article);
+    }
+  }
+
+  // Log counts
+  perspectives.forEach(p => {
+    console.log(`${p.name} sources: ${buckets[p.id].length}`);
+  });
   if (fallbackArticles.length > 0) {
     console.log(`Other sources detected: ${fallbackArticles.length}`);
   }
 
-  // Format Venezuelan articles
-  const venezuelanText =
-    venezuelanArticles.length > 0
-      ? venezuelanArticles
-          .map((article, idx) => {
-            return `Article ${idx + 1}:
+  // Format text blocks
+  const perspectiveTexts = perspectives.map(p => {
+    const pArticles = buckets[p.id];
+    const text = pArticles.length > 0
+      ? pArticles.map((article, idx) => {
+        return `Article ${idx + 1}:
 Title: ${article.title}
 Source: ${article.source.name}
 Published: ${article.publishedAt}
 Description: ${article.description || "N/A"}
 ---`;
-          })
-          .join("\n\n")
-      : "No Venezuelan sources available";
+      }).join("\n\n")
+      : `No ${p.name} sources available`;
 
-  // Format US articles
-  const usText =
-    usArticles.length > 0
-      ? usArticles
-          .map((article, idx) => {
-            return `Article ${idx + 1}:
-Title: ${article.title}
-Source: ${article.source.name}
-Published: ${article.publishedAt}
-Description: ${article.description || "N/A"}
----`;
-          })
-          .join("\n\n")
-      : "No United States sources available";
+    return {
+      id: p.id,
+      name: p.name,
+      text: text
+    };
+  });
 
-  const prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from two regional perspectives.
+  // Build Prompt
+  let prompt = `You are a professional news analyst. Analyze and summarize news about ${topic.name} from different regional perspectives.\n\n`;
 
-VENEZUELAN SOURCES (Spanish-language, from inside Venezuela):
-${venezuelanText}
+  perspectiveTexts.forEach(pt => {
+    prompt += `${pt.name.toUpperCase()} SOURCES:\n${pt.text}\n\n`;
+  });
 
-UNITED STATES SOURCES (English-language, US media):
-${usText}
-
-Your response must be valid JSON matching the schema enforced by the system (arrays of bullet point strings for each field).
+  prompt += `Your response must be valid JSON matching the schema enforced by the system (arrays of bullet point strings for each field).
 
 Requirements:
-- Venezuelan perspective: Pull core takeaways from Venezuelan outlets (translate Spanish where helpful)
-- US perspective: Pull core takeaways from United States outlets only
-- All responses must be provided ONLY as concise bullet points. Each bullet should capture a single idea.
-- Overall highlights: Provide 3-5 bullet points that synthesize both perspectives into a single view
-- Maintain neutrality - present both perspectives fairly
+`;
+
+  perspectiveTexts.forEach(pt => {
+    prompt += `- ${pt.name} perspective: Pull core takeaways from ${pt.name} outlets\n`;
+  });
+
+  prompt += `- All responses must be provided ONLY as concise bullet points. Each bullet should capture a single idea.
+- Overall highlights: Provide 3-5 bullet points that synthesize all perspectives into a single view
+- Maintain neutrality - present all perspectives fairly
 - If perspectives conflict, acknowledge this explicitly in the relevant bullet points
 - If one perspective has no sources, note this and focus on available sources
-- All output must be in English (translate Spanish content as needed)
+- All output must be in English (translate foreign content as needed)
 - DO NOT include any paragraph summaries or narrative text - only bullet points`;
+
+  // Build Schema
+  const properties = {
+    overallHighlights: {
+      type: "array",
+      items: { type: "string" }
+    }
+  };
+
+  const required = ["overallHighlights"];
+
+  perspectives.forEach(p => {
+    const key = `${p.id}Perspective`;
+    properties[key] = {
+      type: "array",
+      items: { type: "string" }
+    };
+    required.push(key);
+  });
 
   const summarySchema = {
     type: "object",
     additionalProperties: false,
-    required: ["venezuelanPerspective", "usPerspective", "overallHighlights"],
-    properties: {
-      venezuelanPerspective: {
-        type: "array",
-        items: { type: "string" },
-      },
-      usPerspective: {
-        type: "array",
-        items: { type: "string" },
-      },
-      overallHighlights: {
-        type: "array",
-        items: { type: "string" },
-      },
-    },
+    required: required,
+    properties: properties
   };
 
   try {
@@ -619,12 +625,29 @@ function generateHugoMarkdown(topic, articles, summary, date) {
   const dateStr = formatDate(date);
 
   // Count articles by perspective
-  const venezuelanArticles = articles.filter(
-    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "venezuelan",
-  );
-  const usArticles = articles.filter(
-    (a) => (a.metadata?.perspective || a.metadata?.feedType) === "us",
-  );
+  const perspectives = topic.perspectives || [];
+  const buckets = {};
+  perspectives.forEach(p => buckets[p.id] = []);
+
+  articles.forEach(a => {
+    const pId = a.metadata?.perspective || a.metadata?.feedType;
+    const p = perspectives.find(p => p.id === pId);
+    if (p) buckets[p.id].push(a);
+  });
+
+  // Build perspectives metadata for frontmatter
+  const perspectivesMeta = perspectives.map(p => ({
+    id: p.id,
+    name: p.name,
+    icon: p.icon,
+    count: buckets[p.id].length
+  }));
+
+  // Dynamic frontmatter fields for backward compatibility or convenience
+  let dynamicFrontmatter = "";
+  perspectives.forEach(p => {
+    dynamicFrontmatter += `${p.id}Sources: ${buckets[p.id].length}\n`;
+  });
 
   const frontMatter = `---
 title: "${topic.name} News - ${dateStr}"
@@ -633,9 +656,8 @@ topic: ${topic.id}
 topicName: "${topic.name}"
 sources: [${sources.map((s) => `"${s}"`).join(", ")}]
 articleCount: ${articles.length}
-venezuelanSources: ${venezuelanArticles.length}
-usSources: ${usArticles.length}
-draft: false
+perspectives: ${JSON.stringify(perspectivesMeta)}
+${dynamicFrontmatter}draft: false
 ---
 
 `;
@@ -675,71 +697,47 @@ draft: false
     return points.map((point) => `- ${point}`).join("\n");
   };
 
-  const venezuelanPoints = extractPoints(summary.venezuelanPerspective);
-  const usPoints = extractPoints(
-    summary.usPerspective || summary.internationalPerspective,
-  );
+  // Overall Highlights
   const overallHighlights = extractPoints(
     summary.overallHighlights || summary.overallSummary,
   );
 
-  // Overall Highlights Section (FIRST)
-  const overallSection = `## Overall Highlights
+  let markdown = frontMatter;
+
+  markdown += `## Overall Highlights
 
 ${formatBulletList(overallHighlights, "- Unable to generate combined highlights.")}
 
 `;
 
-  // US Perspective Section (SECOND)
-  const usSection =
-    usArticles.length > 0
-      ? `## US Perspective (US Sources)
+  // Perspective Sections
+  perspectives.forEach(p => {
+    const points = extractPoints(summary[`${p.id}Perspective`]);
+    const count = buckets[p.id].length;
 
-${formatBulletList(usPoints, "- No takeaways available for US sources.")}
+    markdown += `## ${p.name} Perspective (${p.name} Sources)
 
-`
-      : `## US Perspective (US Sources)
-
-- No United States sources available for this time period.
+${count > 0 ? formatBulletList(points, `- No takeaways available for ${p.name} sources.`) : `- No ${p.name} sources available for this time period.`}
 
 `;
+  });
 
-  // Venezuelan Perspective Section (THIRD)
-  const venezuelanSection =
-    venezuelanArticles.length > 0
-      ? `## Inside Venezuela (Venezuelan Sources)
-
-${formatBulletList(venezuelanPoints, "- No takeaways available for Venezuelan sources.")}
-
-`
-      : `## Inside Venezuela (Venezuelan Sources)
-
-- No Venezuelan sources available for this time period.
-
-`;
-
-  // Sources Section with language/region tags (LAST)
-  const sourcesSection = `## Sources
+  // Sources Section
+  markdown += `## Sources
 
 This summary is based on ${articles.length} article${articles.length !== 1 ? "s" : ""} from the following sources:
 
 ${articles
-  .map((article, idx) => {
-    const lang = article.metadata?.language || "unknown";
-    const region = article.metadata?.region || "unknown";
-    const tag = `[${lang}-${region}]`;
-    return `${idx + 1}. ${tag} [${article.title}](${article.url}) - ${article.source.name} (${new Date(article.publishedAt).toLocaleDateString()})`;
-  })
-  .join("\n")}
+      .map((article, idx) => {
+        const lang = article.metadata?.language || "unknown";
+        const region = article.metadata?.region || "unknown";
+        const tag = `[${lang}-${region}]`;
+        return `${idx + 1}. ${tag} [${article.title}](${article.url}) - ${article.source.name} (${new Date(article.publishedAt).toLocaleDateString()})`;
+      })
+      .join("\n")}
 `;
 
-  return (
-    frontMatter +
-    overallSection +
-    usSection +
-    venezuelanSection +
-    sourcesSection
-  );
+  return markdown;
 }
 
 // ============================================================================

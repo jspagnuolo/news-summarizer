@@ -333,6 +333,36 @@ main {
   color: #93c5fd;
 }
 
+.perspective-badge.china {
+  background: #000;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.perspective-badge.japan {
+  background: #000;
+  border-color: #f87171;
+  color: #fecaca;
+}
+
+.perspective-badge.taiwan {
+  background: #000;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.perspective-badge.india {
+  background: #000;
+  border-color: #f97316;
+  color: #fdba74;
+}
+
+.perspective-badge.pakistan {
+  background: #000;
+  border-color: #22c55e;
+  color: #86efac;
+}
+
 /* Perspective Sections Styling */
 .summary-content h2:has(+ h3) {
   background: linear-gradient(90deg, var(--primary-color) 0%, #3b82f6 100%);

@@ -4,7 +4,8 @@ import {
     balanceArticleSelection,
     buildGoogleNewsUrl,
     jaccardSimilarity,
-    formatDate
+    formatDate,
+    generateHugoMarkdown
 } from './index.js';
 
 describe('News Summarizer Worker', () => {
@@ -68,8 +69,15 @@ describe('News Summarizer Worker', () => {
                 { title: 'VE 2', metadata: { perspective: 'venezuelan' } },
             ];
 
+            const topic = {
+                perspectives: [
+                    { id: 'us', name: 'US' },
+                    { id: 'venezuelan', name: 'Venezuelan' }
+                ]
+            };
+
             // Max 4 articles, should take 2 from each if possible
-            const result = balanceArticleSelection(articles, 4, 1);
+            const result = balanceArticleSelection(articles, 4, 1, topic);
 
             const usCount = result.filter(a => a.metadata.perspective === 'us').length;
             const veCount = result.filter(a => a.metadata.perspective === 'venezuelan').length;
@@ -87,7 +95,14 @@ describe('News Summarizer Worker', () => {
                 { title: 'VE 1', metadata: { perspective: 'venezuelan' } }, // Only 1 VE
             ];
 
-            const result = balanceArticleSelection(articles, 4, 0);
+            const topic = {
+                perspectives: [
+                    { id: 'us', name: 'US' },
+                    { id: 'venezuelan', name: 'Venezuelan' }
+                ]
+            };
+
+            const result = balanceArticleSelection(articles, 4, 0, topic);
 
             expect(result).toHaveLength(4);
             expect(result.filter(a => a.metadata.perspective === 'venezuelan')).toHaveLength(1);
@@ -110,6 +125,50 @@ describe('News Summarizer Worker', () => {
         it('should format date as YYYY-MM-DD', () => {
             const date = new Date('2023-01-01T12:00:00Z');
             expect(formatDate(date)).toBe('2023-01-01');
+        });
+    });
+
+    describe('generateHugoMarkdown', () => {
+        it('should generate markdown with dynamic perspectives', () => {
+            const topic = {
+                id: 'test-topic',
+                name: 'Test Topic',
+                perspectives: [
+                    { id: 'p1', name: 'P1', icon: '🔴' },
+                    { id: 'p2', name: 'P2', icon: '🔵' }
+                ]
+            };
+            const articles = [
+                {
+                    title: 'A1',
+                    url: 'u1',
+                    publishedAt: '2023-01-01T00:00:00Z',
+                    source: { name: 'S1' },
+                    metadata: { perspective: 'p1' }
+                },
+                {
+                    title: 'A2',
+                    url: 'u2',
+                    publishedAt: '2023-01-01T00:00:00Z',
+                    source: { name: 'S2' },
+                    metadata: { perspective: 'p2' }
+                }
+            ];
+            const summary = {
+                overallHighlights: ['H1'],
+                p1Perspective: ['P1-1'],
+                p2Perspective: ['P2-1']
+            };
+            const date = new Date('2023-01-01T00:00:00Z');
+
+            const markdown = generateHugoMarkdown(topic, articles, summary, date);
+
+            expect(markdown).toContain('title: "Test Topic News - 2023-01-01"');
+            expect(markdown).toContain('perspectives: [{"id":"p1","name":"P1","icon":"🔴","count":1},{"id":"p2","name":"P2","icon":"🔵","count":1}]');
+            expect(markdown).toContain('## P1 Perspective (P1 Sources)');
+            expect(markdown).toContain('- P1-1');
+            expect(markdown).toContain('## P2 Perspective (P2 Sources)');
+            expect(markdown).toContain('- P2-1');
         });
     });
 });

@@ -8,12 +8,18 @@
         <span>📅 {{ .Date.Format "Monday, January 2, 2006" }}</span>
         <span>🏷️ {{ .Params.topicName }}</span>
         <span>📰 {{ .Params.articleCount }} articles</span>
+        {{ if .Params.perspectives }}
+        {{ range .Params.perspectives }}
+        <span class="perspective-badge {{ .id }}">{{ .icon }} {{ .count }} {{ .name }}</span>
+        {{ end }}
+        {{ else }}
         {{ if .Params.venezuelanSources }}
         <span class="perspective-badge venezuelan">🇻🇪 {{ .Params.venezuelanSources }} Venezuelan</span>
         {{ end }}
         {{ $usSources := or .Params.usSources .Params.internationalSources }}
         {{ if $usSources }}
         <span class="perspective-badge us">🇺🇸 {{ $usSources }} United States</span>
+        {{ end }}
         {{ end }}
         {{ if .Params.sources }}
         <span>🔖 Sources: {{ delimit .Params.sources ", " }}</span>

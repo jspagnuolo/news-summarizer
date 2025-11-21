@@ -4,6 +4,18 @@
       "id": "venezuela",
       "name": "Venezuela",
       "active": true,
+      "perspectives": [
+        {
+          "id": "venezuelan",
+          "name": "Venezuelan",
+          "icon": "🇻🇪"
+        },
+        {
+          "id": "us",
+          "name": "United States",
+          "icon": "🇺🇸"
+        }
+      ],
       "rssFeeds": [
         {
           "type": "google_news",
@@ -18,6 +30,138 @@
           "region": "US",
           "query": "Venezuela (\"US military\" OR \"US Navy\" OR \"naval deployment\" OR \"military buildup\" OR \"warships\" OR \"Caribbean\" OR \"military exercises\" OR \"offshore operations\" OR sanctions OR \"US policy\" OR diplomacy OR Maduro OR oil OR OPEC OR China OR Russia OR Cuba OR \"economic crisis\" OR migration OR humanitarian OR \"military presence\" OR \"geopolitical\" OR politics OR economy OR opposition)",
           "perspective": "us"
+        }
+      ]
+    },
+    {
+      "id": "us-china",
+      "name": "US vs China",
+      "active": true,
+      "perspectives": [
+        {
+          "id": "us",
+          "name": "United States",
+          "icon": "🇺🇸"
+        },
+        {
+          "id": "china",
+          "name": "China",
+          "icon": "🇨🇳"
+        }
+      ],
+      "rssFeeds": [
+        {
+          "type": "google_news",
+          "language": "en",
+          "region": "US",
+          "query": "China (\"US policy\" OR military OR economy OR \"Xi Jinping\" OR technology OR \"human rights\" OR Taiwan OR Japan OR \"Rare Earth Minerals\" OR Semiconductors OR Trade OR \"Belt and Road\")",
+          "perspective": "us"
+        },
+        {
+          "type": "google_news",
+          "language": "zh-Hans",
+          "region": "CN",
+          "query": "美国 (\"中国政策\" OR 军事 OR 经济 OR \"拜登\" OR 科技 OR 人权 OR 台湾 OR 日本 OR 稀土 OR 半导体 OR 贸易 OR \"一带一路\")",
+          "perspective": "china"
+        }
+      ]
+    },
+    {
+      "id": "china-japan",
+      "name": "China vs Japan",
+      "active": true,
+      "perspectives": [
+        {
+          "id": "china",
+          "name": "China",
+          "icon": "🇨🇳"
+        },
+        {
+          "id": "japan",
+          "name": "Japan",
+          "icon": "🇯🇵"
+        }
+      ],
+      "rssFeeds": [
+        {
+          "type": "google_news",
+          "language": "zh-Hans",
+          "region": "CN",
+          "query": "日本 (\"中国政策\" OR 军事 OR 经济 OR \"岸田文雄\" OR 科技 OR 人权 OR 台湾 OR 日本 OR 稀土 OR 半导体 OR 贸易 OR 旅游)",
+          "perspective": "china"
+        },
+        {
+          "type": "google_news",
+          "language": "ja",
+          "region": "JP",
+          "query": "中国 (\"日本政策\" OR 軍事 OR 経済 OR \"習近平\" OR 技術 OR 人権 OR 台湾 OR 日本 OR \"レアアース\" OR 半導体 OR 貿易 OR 観光)",
+          "perspective": "japan"
+        }
+      ]
+    },
+    {
+      "id": "china-taiwan",
+      "name": "China vs Taiwan",
+      "active": true,
+      "perspectives": [
+        {
+          "id": "china",
+          "name": "China",
+          "icon": "🇨🇳"
+        },
+        {
+          "id": "taiwan",
+          "name": "Taiwan",
+          "icon": "🇹🇼"
+        }
+      ],
+      "rssFeeds": [
+        {
+          "type": "google_news",
+          "language": "zh-Hans",
+          "region": "CN",
+          "query": "台湾 (\"中国政策\" OR 军事 OR 海军 OR 经济 OR \"赖清德\" OR 科技 OR 人权 OR 台湾 OR 稀土 OR 半导体)",
+          "perspective": "china"
+        },
+        {
+          "type": "google_news",
+          "language": "zh-Hant",
+          "region": "TW",
+          "query": "中国 (\"台湾政策\" OR 军事 OR 海军 OR 经济 OR \"习近平\" OR 科技 OR 人权 OR 台湾 OR 稀土 OR 半导体)",
+          "perspective": "taiwan"
+        }
+      ]
+    },
+    {
+      "id": "india-pakistan",
+      "name": "India vs Pakistan",
+      "active": true,
+      "perspectives": [
+        {
+          "id": "india",
+          "name": "India",
+          "icon": "🇮🇳"
+        },
+        {
+          "id": "pakistan",
+          "name": "Pakistan",
+          "icon": "🇵🇰"
+        }
+      ],
+      "rssFeeds": [
+        {
+          "type": "google_news",
+          "language": "en",
+          "region": "IN",
+          "query": "Pakistan (\"Foreign policy\" OR military OR economy OR technology OR Manufacturing OR China OR Balochistan)",
+          "perspective": "india"
+        },
+        {
+          "type": "google_news",
+          "language": "ur",
+          "region": "PK",
+          "query": "بھارت (\"خارجہ پالیسی\" OR فوج OR معیشت OR ٹیکنالوجی OR مینوفیکچرنگ OR چین OR بلوچستان)",
+          "perspective": "pakistan"
         }
       ]
     }
