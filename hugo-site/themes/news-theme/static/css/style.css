@@ -170,6 +170,7 @@ main {
 .summary-card h2 a {
   color: var(--link-color);
   text-decoration: none;
+  background: none;
 }
 
 .summary-card h2 a:hover {
@@ -225,8 +226,7 @@ main {
 /* Single Summary Page */
 h2 {
   color: #fff;
-  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 0;
   border-radius: 8px;
   margin-top: 2.5rem;
   margin-bottom: 1rem;
@@ -247,6 +247,11 @@ h2 {
 }
 
 .summary-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+}
+
+.summary-excerpt li {
   margin-bottom: 0.5rem;
   line-height: 1.7;
 }
