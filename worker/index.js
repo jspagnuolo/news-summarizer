@@ -1011,3 +1011,13 @@ export default {
     );
   },
 };
+
+// Export functions for testing
+export {
+  deduplicateArticles,
+  balanceArticleSelection,
+  buildGoogleNewsUrl,
+  jaccardSimilarity,
+  generateHugoMarkdown,
+  formatDate
+};
