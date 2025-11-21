@@ -134,8 +134,8 @@ describe('News Summarizer Worker', () => {
                 id: 'test-topic',
                 name: 'Test Topic',
                 perspectives: [
-                    { id: 'p1', name: 'P1', icon: '🔴' },
-                    { id: 'p2', name: 'P2', icon: '🔵' }
+                    { id: 'p1', name: 'P1' },
+                    { id: 'p2', name: 'P2' }
                 ]
             };
             const articles = [
@@ -167,7 +167,6 @@ describe('News Summarizer Worker', () => {
             expect(markdown).toContain('perspectives:');
             expect(markdown).toContain('- id: "p1"');
             expect(markdown).toContain('name: "P1"');
-            expect(markdown).toContain('icon: "🔴"');
             expect(markdown).toContain('count: 1');
             expect(markdown).toContain('## P1 Perspective (P1 Sources)');
             expect(markdown).toContain('- P1-1');

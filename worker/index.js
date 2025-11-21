@@ -637,10 +637,8 @@ function generateHugoMarkdown(topic, articles, summary, date) {
 
   // Build perspectives metadata for frontmatter (YAML-safe format)
   const perspectivesYaml = perspectives.map(p => {
-    // Escape quotes in names and icons
     const safeName = p.name.replace(/"/g, '\\"');
-    const safeIcon = p.icon.replace(/"/g, '\\"');
-    return `  - id: "${p.id}"\n    name: "${safeName}"\n    icon: "${safeIcon}"\n    count: ${buckets[p.id].length}`;
+    return `  - id: "${p.id}"\n    name: "${safeName}"\n    count: ${buckets[p.id].length}`;
   }).join('\n');
 
   // Dynamic frontmatter fields for backward compatibility or convenience

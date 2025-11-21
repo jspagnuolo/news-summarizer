@@ -7,13 +7,11 @@
       "perspectives": [
         {
           "id": "venezuelan",
-          "name": "Venezuelan",
-          "icon": "🇻🇪"
+          "name": "Venezuelan"
         },
         {
           "id": "us",
-          "name": "United States",
-          "icon": "🇺🇸"
+          "name": "United States"
         }
       ],
       "rssFeeds": [
@@ -40,13 +38,11 @@
       "perspectives": [
         {
           "id": "us",
-          "name": "United States",
-          "icon": "🇺🇸"
+          "name": "United States"
         },
         {
           "id": "china",
-          "name": "China",
-          "icon": "🇨🇳"
+          "name": "China"
         }
       ],
       "rssFeeds": [
@@ -73,13 +69,11 @@
       "perspectives": [
         {
           "id": "china",
-          "name": "China",
-          "icon": "🇨🇳"
+          "name": "China"
         },
         {
           "id": "japan",
-          "name": "Japan",
-          "icon": "🇯🇵"
+          "name": "Japan"
         }
       ],
       "rssFeeds": [
@@ -106,13 +100,11 @@
       "perspectives": [
         {
           "id": "china",
-          "name": "China",
-          "icon": "🇨🇳"
+          "name": "China"
         },
         {
           "id": "taiwan",
-          "name": "Taiwan",
-          "icon": "🇹🇼"
+          "name": "Taiwan"
         }
       ],
       "rssFeeds": [
@@ -139,13 +131,11 @@
       "perspectives": [
         {
           "id": "india",
-          "name": "India",
-          "icon": "🇮🇳"
+          "name": "India"
         },
         {
           "id": "pakistan",
-          "name": "Pakistan",
-          "icon": "🇵🇰"
+          "name": "Pakistan"
         }
       ],
       "rssFeeds": [
