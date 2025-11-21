@@ -782,9 +782,18 @@ async function commitToGitHub(path, content, message, env) {
   const existingSha = await getFileSHA(path, env);
 
   // Properly encode UTF-8 content to base64
+  // Use TextEncoder to get UTF-8 bytes, then convert to base64 in chunks
   const encoder = new TextEncoder();
   const utf8Bytes = encoder.encode(content);
-  const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
+  // Convert Uint8Array to base64 in chunks to avoid call stack size exceeded
+  let binary = '';
+  const chunkSize = 0x8000; // 32KB chunks
+  for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
+    const chunk = utf8Bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  const base64Content = btoa(binary);
 
   const body = {
     message: message,
