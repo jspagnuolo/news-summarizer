@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html lang="{{ .Site.LanguageCode }}">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ .Site.Params.description }}">
     <title>{{ block "title" . }}{{ .Site.Title }}{{ end }}</title>
-    <link rel="stylesheet" href="{{ " css/style.css" | absURL }}">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y03M9LHMLJ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-Y03M9LHMLJ');
-    </script>
+    <link rel="stylesheet" href="{{ "css/style.css" | absURL }}">
 </head>
-
 <body>
     <div class="container">
         <header>
-            <h1><a class="site-title-link" href="{{ " /" | absURL }}">{{ .Site.Title }}</a></h1>
+            <h1><a class="site-title-link" href="{{ "/" | absURL }}">{{ .Site.Title }}</a></h1>
             <p>{{ .Site.Params.description }}</p>
         </header>
 
@@ -42,5 +32,4 @@
         </footer>
     </div>
 </body>
-
 </html>
