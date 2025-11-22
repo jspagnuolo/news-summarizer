@@ -411,7 +411,7 @@ async function fetchNewsForTopic(topic, settings) {
           return pubDate >= cutoffDate;
         });
 
-        const feedKey = `${feed.language}-${feed.region}`;
+        const feedKey = `${feed.perspective || feed.language}-${feed.region}`;
         feedArticles[feedKey] = recentArticles;
 
         console.log(`   ✅ Found: ${recentArticles.length} articles`);
