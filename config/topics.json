@@ -86,9 +86,9 @@
         },
         {
           "type": "google_news",
-          "language": "ja",
-          "region": "JP",
-          "query": "中国",
+          "language": "en",
+          "region": "US",
+          "query": "China (site:japantimes.co.jp OR site:asia.nikkei.com OR site:asahi.com OR site:mainichi.jp OR site:kyodonews.net)",
           "perspective": "japan"
         }
       ]
@@ -117,9 +117,9 @@
         },
         {
           "type": "google_news",
-          "language": "zh-Hant",
-          "region": "TW",
-          "query": "中国",
+          "language": "en",
+          "region": "US",
+          "query": "China (site:focustaiwan.tw OR site:taipeitimes.com OR site:taiwannews.com.tw OR site:cna.com.tw)",
           "perspective": "taiwan"
         }
       ]
