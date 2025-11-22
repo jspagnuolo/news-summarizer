@@ -391,6 +391,21 @@ async function fetchNewsForTopic(topic, settings) {
         });
 
         // Filter by date
+        console.log(`   📅 Date filtering (cutoff: ${cutoffDate.toISOString()})...`);
+
+        // Log sample dates from first few articles
+        if (articles.length > 0) {
+          console.log(`   Sample article dates (first 3):`);
+          articles.slice(0, 3).forEach((a, i) => {
+            const pubDate = new Date(a.publishedAt);
+            const isRecent = pubDate >= cutoffDate;
+            console.log(`      ${i + 1}. "${a.title?.substring(0, 40)}..."`);
+            console.log(`         Raw: ${a.publishedAt}`);
+            console.log(`         Parsed: ${pubDate.toISOString()}`);
+            console.log(`         Recent: ${isRecent ? 'YES ✓' : 'NO ✗ (too old)'}`);
+          });
+        }
+
         const recentArticles = articles.filter((article) => {
           const pubDate = new Date(article.publishedAt);
           return pubDate >= cutoffDate;
@@ -400,6 +415,10 @@ async function fetchNewsForTopic(topic, settings) {
         feedArticles[feedKey] = recentArticles;
 
         console.log(`   ✅ Found: ${recentArticles.length} articles`);
+
+        if (articles.length > 0 && recentArticles.length === 0) {
+          console.log(`   ⚠️  All ${articles.length} articles filtered out by date!`);
+        }
       } catch (error) {
         console.error(
           `   ❌ Failed to fetch ${feed.language}-${feed.region} feed: ${error.message}`,
