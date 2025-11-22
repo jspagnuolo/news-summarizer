@@ -10,11 +10,17 @@
     </div>
     {{ end }}
 
-    {{ $currentSection := .Section }}
+    {{ $currentTopic := "" }}
     {{ $currentPath := .RelPermalink }}
+
+    {{/* Extract topic from the current page's path */}}
+    {{ $pathParts := split .RelPermalink "/" }}
+    {{ if ge (len $pathParts) 3 }}
+    {{ $currentTopic = index $pathParts 2 }}
+    {{ end }}
+
     {{ range .Site.RegularPages }}
-    {{ if eq .Section $currentSection }}
-    {{ if ne .RelPermalink $currentPath }}
+    {{ if and (eq .Params.topic $currentTopic) (ne .RelPermalink $currentPath) }}
     <article class="summary-card">
         <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
         <div class="summary-meta">
@@ -27,7 +33,6 @@
         </div>
         <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
-    {{ end }}
     {{ end }}
     {{ else }}
     <p class="empty-state">
