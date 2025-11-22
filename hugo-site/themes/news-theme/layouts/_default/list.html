@@ -11,7 +11,10 @@
     {{ end }}
 
     {{ $currentSection := .Section }}
-    {{ range .Pages }}
+    {{ $currentPath := .RelPermalink }}
+    {{ range .Site.RegularPages }}
+    {{ if eq .Section $currentSection }}
+    {{ if ne .RelPermalink $currentPath }}
     <article class="summary-card">
         <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
         <div class="summary-meta">
@@ -24,6 +27,8 @@
         </div>
         <a href="{{ .Permalink }}" class="read-more-btn">Read Full Summary →</a>
     </article>
+    {{ end }}
+    {{ end }}
     {{ else }}
     <p class="empty-state">
         No summaries available yet for this topic.
