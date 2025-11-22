@@ -418,6 +418,17 @@ async function fetchNewsForTopic(topic, settings) {
 
     console.log(`\n   📊 Total articles collected: ${allArticles.length}`);
 
+    // Log articles by perspective
+    if (topic.perspectives) {
+      console.log(`\n   📋 Articles by perspective BEFORE processing:`);
+      topic.perspectives.forEach(p => {
+        const count = allArticles.filter(a =>
+          (a.metadata?.perspective || a.metadata?.feedType) === p.id
+        ).length;
+        console.log(`      ${p.name} (${p.id}): ${count} articles`);
+      });
+    }
+
     // Remove duplicates by URL first
     const uniqueByUrl = Array.from(
       new Map(allArticles.map((a) => [a.url, a])).values(),
@@ -425,10 +436,28 @@ async function fetchNewsForTopic(topic, settings) {
 
     console.log(`   After URL deduplication: ${uniqueByUrl.length}`);
 
+    // Log what was removed by URL deduplication
+    if (uniqueByUrl.length < allArticles.length) {
+      console.log(`      Removed ${allArticles.length - uniqueByUrl.length} duplicate URLs`);
+    }
+
     // Apply similarity-based deduplication if threshold is set
     let deduplicated = uniqueByUrl;
     if (deduplicationThreshold && deduplicationThreshold > 0) {
       deduplicated = deduplicateArticles(uniqueByUrl, deduplicationThreshold);
+
+      // Log perspective breakdown after deduplication
+      if (topic.perspectives) {
+        console.log(`\n   📋 Articles by perspective AFTER deduplication:`);
+        topic.perspectives.forEach(p => {
+          const count = deduplicated.filter(a =>
+            (a.metadata?.perspective || a.metadata?.feedType) === p.id
+          ).length;
+          console.log(`      ${p.name} (${p.id}): ${count} articles`);
+        });
+      }
+    } else {
+      console.log(`   Similarity deduplication: DISABLED (threshold: ${deduplicationThreshold})`);
     }
 
     // Sort by date (newest first)

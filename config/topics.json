@@ -160,6 +160,6 @@
     "maxArticlesPerTopic": 20,
     "articleMaxAge": "5d",
     "minArticlesPerFeed": 5,
-    "deduplicationSimilarityThreshold": 0.75
+    "deduplicationSimilarityThreshold": 0
   }
 }
