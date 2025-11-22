@@ -88,7 +88,7 @@
           "type": "google_news",
           "language": "ja",
           "region": "JP",
-          "query": "中国 site:.jp",
+          "query": "中国",
           "perspective": "japan"
         }
       ]
@@ -119,7 +119,7 @@
           "type": "google_news",
           "language": "zh-Hant",
           "region": "TW",
-          "query": "中国 site:.tw",
+          "query": "中国",
           "perspective": "taiwan"
         }
       ]
