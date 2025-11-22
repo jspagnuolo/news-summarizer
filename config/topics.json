@@ -56,7 +56,7 @@
         {
           "type": "google_news",
           "language": "zh-Hans",
-          "region": "HK",
+          "region": "SG",
           "query": "美国 (\"中国政策\" OR 军事 OR 经济 OR \"拜登\" OR 科技 OR 人权 OR 台湾 OR 日本 OR 稀土 OR 半导体 OR 贸易 OR \"一带一路\")",
           "perspective": "china"
         }
@@ -80,7 +80,7 @@
         {
           "type": "google_news",
           "language": "zh-Hans",
-          "region": "HK",
+          "region": "SG",
           "query": "日本 (\"中国政策\" OR 军事 OR 经济 OR \"岸田文雄\" OR 科技 OR 人权 OR 台湾 OR 日本 OR 稀土 OR 半导体 OR 贸易 OR 旅游)",
           "perspective": "china"
         },
@@ -111,7 +111,7 @@
         {
           "type": "google_news",
           "language": "zh-Hans",
-          "region": "HK",
+          "region": "SG",
           "query": "台湾 (\"中国政策\" OR 军事 OR 海军 OR 经济 OR \"赖清德\" OR 科技 OR 人权 OR 台湾 OR 稀土 OR 半导体)",
           "perspective": "china"
         },
@@ -150,7 +150,7 @@
           "type": "google_news",
           "language": "en",
           "region": "PK",
-          "query": "India (\"Foreign policy\" OR military OR economy OR technology OR Manufacturing OR China OR Balochistan)",
+          "query": "India (\"Foreign policy\" OR military OR economy OR technology OR Manufacturing OR China OR Balochistan) site:.pk",
           "perspective": "pakistan"
         }
       ]
