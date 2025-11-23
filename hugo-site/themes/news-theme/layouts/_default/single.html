@@ -4,6 +4,7 @@
 <article class="summary-card">
     <h1>{{ .Title }}</h1>
 
+    {{ if ne .Type "page" }}
     <div class="summary-meta summary-meta-panel">
         <span>📅 {{ .Date.Format "Monday, January 2, 2006" }}</span>
         <span>🏷️ {{ .Params.topicName }}</span>
@@ -25,6 +26,7 @@
         <span>🔖 Sources: {{ delimit .Params.sources ", " }}</span>
         {{ end }}
     </div>
+    {{ end }}
 
     <div class="summary-content">
         {{ .Content }}
