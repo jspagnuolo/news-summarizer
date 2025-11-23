@@ -9,11 +9,11 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y03M9LHMLJ"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-    gtag('config', 'G-Y03M9LHMLJ');
+        gtag('config', 'G-Y03M9LHMLJ');
     </script>
 </head>
 <body>
@@ -38,6 +38,7 @@
         <footer>
             <p>&copy; {{ now.Format "2006" }} {{ .Site.Title }}. Powered by AI and automation.</p>
             <p>Generated with Hugo, summarized by OpenAI, deployed to Cloudflare Pages.</p>
+            <p><a href="{{ "/privacy" | absURL }}">Privacy Policy</a></p>
         </footer>
     </div>
 </body>
